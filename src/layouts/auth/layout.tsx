@@ -70,7 +70,8 @@ export function AuthLayout({
         disableElevation
         layoutQuery={layoutQuery}
         {...slotProps?.header}
-        slots={{ ...headerSlots, ...slotProps?.header?.slots }}
+        // slots={{ ...headerSlots, ...slotProps?.header?.slots }}
+        slots={{ ...slotProps?.header?.slots }}
         slotProps={merge(headerSlotProps, slotProps?.header?.slotProps ?? {})}
         sx={[
           { position: { [layoutQuery]: 'fixed' } },

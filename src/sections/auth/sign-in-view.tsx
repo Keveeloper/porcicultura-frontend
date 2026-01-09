@@ -1,4 +1,7 @@
 import { useState, useCallback } from 'react';
+import axios, { type AxiosError } from 'axios';
+import { FirebaseError, initializeApp } from 'firebase/app';
+import { getAuth, signInWithPopup, GoogleAuthProvider} from 'firebase/auth';
 
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
@@ -11,17 +14,62 @@ import InputAdornment from '@mui/material/InputAdornment';
 
 import { useRouter } from 'src/routes/hooks';
 
+import api from 'src/services/axios-instance/api';
+import firebaseConfig from 'src/firebase-config/firebase-config';
+
 import { Iconify } from 'src/components/iconify';
 
+import type { GoogleLoginResponse } from './types/types';
+
 // ----------------------------------------------------------------------
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
 export function SignInView() {
   const router = useRouter();
 
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSignIn = useCallback(() => {
-    router.push('/');
+  const handleSignIn = useCallback(async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const firebaseIdToken = await result.user.getIdToken();
+      console.log('Login con Google exitoso. ID Token:', firebaseIdToken);
+
+      const response = await api.post<GoogleLoginResponse>('/auth/google/login', {}, {
+        headers: {
+          'Authorization': `Bearer ${firebaseIdToken}`, 
+        },
+      });
+      console.log('response: ', response);
+
+      router.push('/');
+
+    } catch (e) {
+      console.error('Error durante el inicio de sesión con Google:', e);
+      // --- Manejo de errores de Firebase ---
+      if (e instanceof FirebaseError) {
+        if (e.code === 'auth/popup-closed-by-user') {
+          console.log('Proceso de inicio de sesión cancelado.');
+        } else {
+          console.log(`Error de Firebase: ${e.message}`);
+        }
+        return; // Salir del catch
+      }
+
+      // --- Manejo de errores de Axios (Errores HTTP del Backend) ---
+      // Usamos type guards de Axios para verificar si es un error HTTP
+      if (axios.isAxiosError(e)) {
+        const axiosError = e as AxiosError;
+        if (axiosError.response) {
+          // El backend respondió con un estado fuera de 2xx (ej. 401 Unauthorized)
+          const errorMessage = axiosError.message || `Error del Servidor (${axiosError.response.status}).`;
+          console.log(errorMessage);
+          return;
+        }
+      }
+    }
   }, [router]);
 
   const renderForm = (
@@ -32,7 +80,7 @@ export function SignInView() {
         flexDirection: 'column',
       }}
     >
-      <TextField
+      {/* <TextField
         fullWidth
         name="email"
         label="Email address"
@@ -41,13 +89,13 @@ export function SignInView() {
         slotProps={{
           inputLabel: { shrink: true },
         }}
-      />
+      /> */}
 
-      <Link variant="body2" color="inherit" sx={{ mb: 1.5 }}>
+      {/* <Link variant="body2" color="inherit" sx={{ mb: 1.5 }}>
         Forgot password?
-      </Link>
+      </Link> */}
 
-      <TextField
+      {/* <TextField
         fullWidth
         name="password"
         label="Password"
@@ -66,17 +114,18 @@ export function SignInView() {
           },
         }}
         sx={{ mb: 3 }}
-      />
+      /> */}
 
       <Button
         fullWidth
+        startIcon={<Iconify icon="socials:google" width={20} />}
         size="large"
         type="submit"
         color="inherit"
         variant="contained"
         onClick={handleSignIn}
       >
-        Sign in
+        Iniciar con google
       </Button>
     </Box>
   );
@@ -92,29 +141,29 @@ export function SignInView() {
           mb: 5,
         }}
       >
-        <Typography variant="h5">Sign in</Typography>
+        <Typography variant="h5">Iniciar sesión</Typography>
         <Typography
           variant="body2"
           sx={{
             color: 'text.secondary',
           }}
         >
-          Don’t have an account?
+          Vamos a iniciar sesión con
           <Link variant="subtitle2" sx={{ ml: 0.5 }}>
-            Get started
+            Google
           </Link>
         </Typography>
       </Box>
       {renderForm}
-      <Divider sx={{ my: 3, '&::before, &::after': { borderTopStyle: 'dashed' } }}>
+      {/* <Divider sx={{ my: 3, '&::before, &::after': { borderTopStyle: 'dashed' } }}>
         <Typography
           variant="overline"
           sx={{ color: 'text.secondary', fontWeight: 'fontWeightMedium' }}
         >
           OR
         </Typography>
-      </Divider>
-      <Box
+      </Divider> */}
+      {/* <Box
         sx={{
           gap: 1,
           display: 'flex',
@@ -130,7 +179,7 @@ export function SignInView() {
         <IconButton color="inherit">
           <Iconify width={22} icon="socials:twitter" />
         </IconButton>
-      </Box>
+      </Box> */}
     </>
   );
 }
