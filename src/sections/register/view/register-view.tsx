@@ -19,7 +19,7 @@ import firebaseConfig from 'src/firebase-config/firebase-config';
 
 import { Iconify } from 'src/components/iconify';
 
-// import type { GoogleLoginResponse } from './types/types';
+// import { GoogleLoginResponse } from 'src/sections/auth';
 
 // ----------------------------------------------------------------------
 const app = initializeApp(firebaseConfig);
@@ -27,9 +27,7 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
 export function RegisterView() {
-  const router = useRouter();
-
-  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();  
 
   const handleSignIn = useCallback(async () => {
     try {
@@ -37,14 +35,14 @@ export function RegisterView() {
       const firebaseIdToken = await result.user.getIdToken();
       console.log('Login con Google exitoso. ID Token:', firebaseIdToken);
 
-    //   const response = await api.post<GoogleLoginResponse>('/auth/google/login', {}, {
-    //     headers: {
-    //       'Authorization': `Bearer ${firebaseIdToken}`, 
-    //     },
-    //   });
-    //   console.log('response: ', response);
+      // const response = await api.post<GoogleLoginResponse>('/auth/google/login', {}, {
+      //   headers: {
+      //     'Authorization': `Bearer ${firebaseIdToken}`, 
+      //   },
+      // });
+      // console.log('response: ', response);
 
-      router.push('/');
+      // router.push('/');
 
     } catch (e) {
       console.error('Error durante el inicio de sesión con Google:', e);
@@ -99,17 +97,7 @@ export function RegisterView() {
         slotProps={{
           inputLabel: { shrink: true },
         }}
-      />
-      <TextField
-        fullWidth
-        name="address"
-        label="Dirección"
-        placeholder='Ingrese la dirección de su empresa...'
-        sx={{ mb: 3 }}
-        slotProps={{
-          inputLabel: { shrink: true },
-        }}
-      />
+      />      
       {/* <Divider sx={{ mb: 3, width: '100%', '&::before, &::after': { borderTopStyle: 'dashed' } }}/> */}
       <Button
         fullWidth

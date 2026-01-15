@@ -27,9 +27,7 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
 export function SignInView() {
-  const router = useRouter();
-
-  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();  
 
   const handleSignIn = useCallback(async () => {
     try {
@@ -43,8 +41,12 @@ export function SignInView() {
         },
       });
       console.log('response: ', response);
+      if (response.data.userResponse?.company) {        
+        router.push('/');
+      }else{
+        router.push('/register');
+      }
 
-      router.push('/');
 
     } catch (e) {
       console.error('Error durante el inicio de sesión con Google:', e);
