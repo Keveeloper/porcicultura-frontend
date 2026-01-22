@@ -35,12 +35,16 @@ export function RegisterView() {
       const firebaseIdToken = await result.user.getIdToken();
       console.log('Login con Google exitoso. ID Token:', firebaseIdToken);
 
-      // const response = await api.post<GoogleLoginResponse>('/auth/google/login', {}, {
-      //   headers: {
-      //     'Authorization': `Bearer ${firebaseIdToken}`, 
-      //   },
-      // });
-      // console.log('response: ', response);
+      // const response = await api.post<GoogleLoginResponse>('/companies', {}, {
+      const response = await api.post('/companies', {
+        name: 'Granjita',
+        nit: '123456789'
+      }, {
+        // headers: {
+        //   'Authorization': `Bearer ${firebaseIdToken}`, 
+        // },
+      });
+      console.log('response: ', response);
 
       // router.push('/');
 
