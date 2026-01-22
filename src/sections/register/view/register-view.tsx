@@ -19,46 +19,36 @@ import firebaseConfig from 'src/firebase-config/firebase-config';
 
 import { Iconify } from 'src/components/iconify';
 
+import type { RegisterInterface } from './types/types';
+
 // import { GoogleLoginResponse } from 'src/sections/auth';
 
 // ----------------------------------------------------------------------
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
+// const app = initializeApp(firebaseConfig);
+// const auth = getAuth(app);
+// const googleProvider = new GoogleAuthProvider();
 
 export function RegisterView() {
   const router = useRouter();  
 
-  const handleSignIn = useCallback(async () => {
+  const handleRegister = useCallback(async () => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const firebaseIdToken = await result.user.getIdToken();
-      console.log('Login con Google exitoso. ID Token:', firebaseIdToken);
+    //   const result = await signInWithPopup(auth, googleProvider);
+    //   const firebaseIdToken = await result.user.getIdToken();
+    //   console.log('Login con Google exitoso. ID Token:', firebaseIdToken);
 
       // const response = await api.post<GoogleLoginResponse>('/companies', {}, {
-      const response = await api.post('/companies', {
+      const response: RegisterInterface = await api.post('/companies', {
         name: 'Granjita',
         nit: '123456789'
-      }, {
-        // headers: {
-        //   'Authorization': `Bearer ${firebaseIdToken}`, 
-        // },
-      });
-      console.log('response: ', response);
-
-      // router.push('/');
+      }, {});
+      console.log('Register response: ', response);
+      if (response.company) {
+        router.push('/');
+      }
 
     } catch (e) {
-      console.error('Error durante el inicio de sesión con Google:', e);
-      // --- Manejo de errores de Firebase ---
-      if (e instanceof FirebaseError) {
-        if (e.code === 'auth/popup-closed-by-user') {
-          console.log('Proceso de inicio de sesión cancelado.');
-        } else {
-          console.log(`Error de Firebase: ${e.message}`);
-        }
-        return; // Salir del catch
-      }
+      console.error('Error al registrar la empresa: ', e);
 
       // --- Manejo de errores de Axios (Errores HTTP del Backend) ---
       // Usamos type guards de Axios para verificar si es un error HTTP
@@ -110,7 +100,7 @@ export function RegisterView() {
         type="submit"
         color="inherit"
         variant="contained"
-        onClick={handleSignIn}
+        onClick={handleRegister}
       >
         Registrarse
       </Button>
