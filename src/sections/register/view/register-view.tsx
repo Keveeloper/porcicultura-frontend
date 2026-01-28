@@ -38,12 +38,12 @@ export function RegisterView() {
     //   console.log('Login con Google exitoso. ID Token:', firebaseIdToken);
 
       // const response = await api.post<GoogleLoginResponse>('/companies', {}, {
-      const response: RegisterInterface = await api.post('/companies', {
+      const response = await api.post('/companies', {
         name: 'Granjita',
         nit: '123456789'
       }, {});
       console.log('Register response: ', response);
-      if (response.company) {
+      if (response.data.company) {
         router.push('/');
       }
 

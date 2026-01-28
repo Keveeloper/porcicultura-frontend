@@ -7,6 +7,8 @@ import { usePathname } from 'src/routes/hooks';
 
 import { ThemeProvider } from 'src/theme/theme-provider';
 
+import { useAuthStore } from './auth/auth-store';
+
 // import { Iconify } from 'src/components/iconify';
 
 type AppProps = {
@@ -16,6 +18,16 @@ type AppProps = {
 export default function App({ children }: AppProps) {
   useScrollToTop();
 
+  const checkAuth = useAuthStore((state) => state.checkAuth);
+  const loading = useAuthStore((state) => state.loading);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  if (loading) {
+    return null;
+  }
   /* const githubButton = () => (
     <Fab
       size="medium"

@@ -1,7 +1,7 @@
+import { FirebaseError } from 'firebase/app';
 import { useState, useCallback } from 'react';
 import axios, { type AxiosError } from 'axios';
-import { FirebaseError, initializeApp } from 'firebase/app';
-import { getAuth, signInWithPopup, GoogleAuthProvider} from 'firebase/auth';
+import { signInWithPopup } from 'firebase/auth';
 
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
@@ -15,39 +15,44 @@ import InputAdornment from '@mui/material/InputAdornment';
 import { useRouter } from 'src/routes/hooks';
 
 import api from 'src/services/axios-instance/api';
-import firebaseConfig from 'src/firebase-config/firebase-config';
+// import firebaseConfig from 'src/firebase-config/firebase-config';
+import { auth, googleProvider } from 'src/firebase-config/firebase-config';
 
 import { Iconify } from 'src/components/iconify';
 
-import type { GoogleLoginResponse } from './types/types';
+import { useAuthStore } from 'src/auth/auth-store';
+
+import type { User } from './types/types';
+
 
 // ----------------------------------------------------------------------
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
+// const app = initializeApp(firebaseConfig);
+// const auth = getAuth(app);
+// const googleProvider = new GoogleAuthProvider();
+// googleProvider.setCustomParameters({
+//   prompt: 'select_account',
+// });
 
 export function SignInView() {
-  const router = useRouter();  
+  const router = useRouter();
+  const setUser = useAuthStore((state) => state.setUser);
 
   const handleSignIn = useCallback(async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const firebaseIdToken = await result.user.getIdToken();
-      console.log('Login con Google exitoso. ID Token:', firebaseIdToken);
-
-      const response = await api.post<GoogleLoginResponse>('/auth/google/login', {}, {
+      const response = await api.post<User>('/auth/google/login', {}, {
         headers: {
           'Authorization': `Bearer ${firebaseIdToken}`, 
         },
       });
-      console.log('response: ', response);
-      if (response.data.userResponse?.company) {        
+      const userData = response.data;
+      setUser(userData);      
+      if (userData?.company !== null && userData?.company !== undefined) {        
         router.push('/');
       }else{
         router.push('/register');
       }
-
-
     } catch (e) {
       console.error('Error durante el inicio de sesión con Google:', e);
       // --- Manejo de errores de Firebase ---
@@ -72,7 +77,7 @@ export function SignInView() {
         }
       }
     }
-  }, [router]);
+  }, [router, setUser]);
 
   const renderForm = (
     <Box

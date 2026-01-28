@@ -1,11 +1,6 @@
-export interface GoogleLoginResponse {
-  accessToken: string;
-  userResponse: UserResponseInterface;
-}
-
-interface UserResponseInterface {
+export interface User {
   id: string;
-  email: string
+  email: string;
   company: CompanyInterface | null; 
   googleId: string;
   createdAt: string;

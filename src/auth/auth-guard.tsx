@@ -1,17 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import { useAuthStore } from './auth-store';
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(true); 
+  const { user, loading } = useAuthStore();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!loading && !user) {
       navigate('/sign-in', { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [user, loading, navigate]);
 
-  if (!isAuthenticated) {
+  if (loading || !user) {
     return null;
   }
 
