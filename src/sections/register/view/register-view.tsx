@@ -1,46 +1,30 @@
 import { useState, useCallback } from 'react';
 import axios, { type AxiosError } from 'axios';
-import { FirebaseError, initializeApp } from 'firebase/app';
-import { getAuth, signInWithPopup, GoogleAuthProvider} from 'firebase/auth';
 
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Button from '@mui/material/Button';
-import Divider from '@mui/material/Divider';
 import TextField from '@mui/material/TextField';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import InputAdornment from '@mui/material/InputAdornment';
 
 import { useRouter } from 'src/routes/hooks';
 
 import api from 'src/services/axios-instance/api';
-import firebaseConfig from 'src/firebase-config/firebase-config';
 
 import { Iconify } from 'src/components/iconify';
 
-import type { RegisterInterface } from './types/types';
-
-// import { GoogleLoginResponse } from 'src/sections/auth';
-
 // ----------------------------------------------------------------------
-// const app = initializeApp(firebaseConfig);
-// const auth = getAuth(app);
-// const googleProvider = new GoogleAuthProvider();
 
 export function RegisterView() {
-  const router = useRouter();  
+  const router = useRouter();
+  const [ companyName, setCompanyName ] = useState('');
+  const [ nit, setNit ] = useState('');
 
   const handleRegister = useCallback(async () => {
     try {
-    //   const result = await signInWithPopup(auth, googleProvider);
-    //   const firebaseIdToken = await result.user.getIdToken();
-    //   console.log('Login con Google exitoso. ID Token:', firebaseIdToken);
-
-      // const response = await api.post<GoogleLoginResponse>('/companies', {}, {
       const response = await api.post('/companies', {
-        name: 'Granjita',
-        nit: '123456789'
+        name: companyName,
+        nit
       }, {});
       console.log('Register response: ', response);
       if (response.data.company) {
@@ -49,20 +33,13 @@ export function RegisterView() {
 
     } catch (e) {
       console.error('Error al registrar la empresa: ', e);
-
-      // --- Manejo de errores de Axios (Errores HTTP del Backend) ---
-      // Usamos type guards de Axios para verificar si es un error HTTP
       if (axios.isAxiosError(e)) {
-        const axiosError = e as AxiosError;
-        if (axiosError.response) {
-          // El backend respondió con un estado fuera de 2xx (ej. 401 Unauthorized)
-          const errorMessage = axiosError.message || `Error del Servidor (${axiosError.response.status}).`;
-          console.log(errorMessage);
-          return;
-        }
+        const axiosError = e as AxiosError<{ message: string }>;
+        const errorMessage = axiosError.response?.data?.message || axiosError.message;
+        console.log(errorMessage);
       }
     }
-  }, [router]);
+  }, [nit, companyName, router]);
 
   const renderForm = (
     <Box
@@ -77,6 +54,8 @@ export function RegisterView() {
         name="company_name"
         label="Nombre o razón social"
         placeholder='Ingrese el nombre de su empresa...'
+        value={companyName}
+        onChange={(e) => setCompanyName(e.target.value)}
         sx={{ mb: 3 }}
         slotProps={{
           inputLabel: { shrink: true },
@@ -87,12 +66,13 @@ export function RegisterView() {
         name="nit"
         label="NIT"
         placeholder='Ingrese el NIT de su empresa...'
+        value={nit}
+        onChange={(e) => setNit(e.target.value)}
         sx={{ mb: 3 }}
         slotProps={{
           inputLabel: { shrink: true },
         }}
-      />      
-      {/* <Divider sx={{ mb: 3, width: '100%', '&::before, &::after': { borderTopStyle: 'dashed' } }}/> */}
+      />
       <Button
         fullWidth
         startIcon={<Iconify icon="mingcute:add-line" width={20} />}
@@ -132,23 +112,6 @@ export function RegisterView() {
         </Typography>
       </Box>
       {renderForm}
-      {/* <Box
-        sx={{
-          gap: 1,
-          display: 'flex',
-          justifyContent: 'center',
-        }}
-      >
-        <IconButton color="inherit">
-          <Iconify width={22} icon="socials:google" />
-        </IconButton>
-        <IconButton color="inherit">
-          <Iconify width={22} icon="socials:github" />
-        </IconButton>
-        <IconButton color="inherit">
-          <Iconify width={22} icon="socials:twitter" />
-        </IconButton>
-      </Box> */}
     </>
   );
 }
