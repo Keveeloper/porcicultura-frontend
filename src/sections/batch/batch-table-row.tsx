@@ -13,6 +13,8 @@ import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 
+import { CreateStageModal } from './create-batch-stage-modal';
+
 import type { BatchInterface } from './view';
 
 // ----------------------------------------------------------------------
@@ -24,6 +26,7 @@ type UserTableRowProps = {
 };
 
 export function BatchTableRow({ row, selected, onSelectRow }: UserTableRowProps) {
+  const [openModal, setOpenModal] = useState(false);
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
 
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -33,6 +36,11 @@ export function BatchTableRow({ row, selected, onSelectRow }: UserTableRowProps)
   const handleClosePopover = useCallback(() => {
     setOpenPopover(null);
   }, []);
+
+  const handleOpenModal = () => {
+    setOpenModal(true);
+    handleClosePopover(); // Cierra el menú de los tres puntitos
+  };
 
   return (
     <>
@@ -100,7 +108,7 @@ export function BatchTableRow({ row, selected, onSelectRow }: UserTableRowProps)
             },
           }}
         >
-          <MenuItem onClick={handleClosePopover}>
+          <MenuItem onClick={handleOpenModal}>
             <Iconify icon="solar:pen-bold" />
             Edit
           </MenuItem>
@@ -111,6 +119,11 @@ export function BatchTableRow({ row, selected, onSelectRow }: UserTableRowProps)
           </MenuItem>
         </MenuList>
       </Popover>
+      <CreateStageModal 
+        batchId={row.id} 
+        open={openModal} 
+        onClose={() => setOpenModal(false)} 
+      />
     </>
   );
 }
