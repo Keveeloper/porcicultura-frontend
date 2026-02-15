@@ -78,7 +78,7 @@ export function BatcheStagesView() {
         }}
       >
         <Typography variant="h4" sx={{ flexGrow: 1 }}>
-          Lotes
+          Estapas de lotes
         </Typography>
         <Button
           variant="contained"

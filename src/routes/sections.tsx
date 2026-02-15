@@ -19,6 +19,7 @@ export const BlogPage = lazy(() => import('src/pages/blog'));
 export const UserPage = lazy(() => import('src/pages/user'));
 export const BatchPage = lazy(() => import('src/pages/batches'));
 export const BatchStagesPage = lazy(() => import('src/pages/batch-stages'));
+export const BatchStageDetailsPage = lazy(() => import('src/pages/batch-stage-details'));
 export const SignInPage = lazy(() => import('src/pages/sign-in'));
 export const RegisterPage = lazy(() => import('src/pages/register'));
 export const ProductsPage = lazy(() => import('src/pages/products'));
@@ -63,6 +64,7 @@ export const routesSection: RouteObject[] = [
       { path: 'company', element: <CompanyPage /> },
       { path: 'batches', element: <BatchPage /> },
       { path: 'batches/:batchId/batch-stages', element: <BatchStagesPage /> },
+      { path: 'batches/:batchId/batch-stages/:batchStageId', element: <BatchStageDetailsPage /> },
     ],
   },
   {

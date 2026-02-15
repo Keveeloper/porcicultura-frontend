@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import Box from '@mui/material/Box';
 import Avatar from '@mui/material/Avatar';
@@ -26,6 +26,7 @@ type UserTableRowProps = {
 
 export function BatchStagesTableRow({ row, selected, onSelectRow }: UserTableRowProps) {
   const navigate = useNavigate();
+  const { batchId } = useParams();
   const [openModal, setOpenModal] = useState(false);
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
 
@@ -42,10 +43,10 @@ export function BatchStagesTableRow({ row, selected, onSelectRow }: UserTableRow
     handleClosePopover();
   };
 
-  const handleViewBatch = useCallback(() => {
+  const handleViewBatchStages = useCallback(() => {
     handleClosePopover();
-    navigate(`/batches/${row.id}/batch-stages`);
-  }, [navigate, row.id, handleClosePopover]);
+    navigate(`/batches/${batchId}/batch-stages/${row.id}`);
+  }, [navigate, row.id, handleClosePopover, batchId]);
 
   return (
     <>
@@ -105,7 +106,7 @@ export function BatchStagesTableRow({ row, selected, onSelectRow }: UserTableRow
             Crear etapa
           </MenuItem>
 
-          <MenuItem onClick={handleViewBatch} sx={{'&:hover': {
+          <MenuItem onClick={handleViewBatchStages} sx={{'&:hover': {
             color: '#1877F2',
             cursor: 'pointer',
           },}}>

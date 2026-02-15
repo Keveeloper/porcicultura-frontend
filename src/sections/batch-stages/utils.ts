@@ -58,6 +58,26 @@ type ApplyFilterProps = {
   comparator: (a: any, b: any) => number;
 };
 
+// export function applyFilter({ inputData, comparator, filterName }: ApplyFilterProps) {
+//   const stabilizedThis = inputData?.map((el: any, index: any) => [el, index] as const);
+
+//   stabilizedThis.sort((a: any, b: any) => {
+//     const order = comparator(a[0], b[0]);
+//     if (order !== 0) return order;
+//     return a[1] - b[1];
+//   });
+
+//   inputData = stabilizedThis.map((el: any) => el[0]);
+
+//   if (filterName) {
+//     inputData = inputData.filter(
+//       (user: any) => user.initial_pigs.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
+//     );
+//   }
+
+//   return inputData;
+// }
+
 export function applyFilter({ inputData, comparator, filterName }: ApplyFilterProps) {
   const stabilizedThis = inputData?.map((el: any, index: any) => [el, index] as const);
 
@@ -70,9 +90,14 @@ export function applyFilter({ inputData, comparator, filterName }: ApplyFilterPr
   inputData = stabilizedThis.map((el: any) => el[0]);
 
   if (filterName) {
-    inputData = inputData.filter(
-      (user: any) => user.batch_number.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
-    );
+    inputData = inputData.filter((item: any) => {
+      // Convertimos el número a string explícitamente antes de comparar
+      const initialPigs = String(item.initial_pigs || '');
+      
+      return initialPigs
+        .toLowerCase()
+        .indexOf(filterName.toLowerCase()) !== -1;
+    });
   }
 
   return inputData;
