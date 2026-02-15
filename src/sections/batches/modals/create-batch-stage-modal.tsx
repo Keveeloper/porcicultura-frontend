@@ -14,7 +14,7 @@ interface Props {
   onSuccess?: () => void;
 }
 
-export function CreateStageModal({ batchId, open, onClose, onSuccess }: Props) {
+export function CreateBatchStageModal({ batchId, open, onClose, onSuccess }: Props) {
   const { register, handleSubmit, reset } = useForm({
     defaultValues: {
       batchId,
@@ -61,8 +61,9 @@ export function CreateStageModal({ batchId, open, onClose, onSuccess }: Props) {
               label="Tipo de Etapa"
               {...register('stage_type', { required: true })}
             >
-              <MenuItem value="growing">Growing (Crecimiento)</MenuItem>
-              <MenuItem value="finishing">Finishing (Engorde)</MenuItem>
+              <MenuItem value="pre-nursery">Precebo</MenuItem>
+              <MenuItem value="growing">Levante</MenuItem>
+              <MenuItem value="finishing">Engorde</MenuItem>
             </TextField>
 
             <Box sx={{ display: 'flex', gap: 2 }}>

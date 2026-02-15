@@ -13,24 +13,24 @@ export type NavItem = {
 };
 
 export const navData = [
-  {
-    title: 'Empresa',
-    path: '/company',
-    icon: icon('ic-blog'),
-  },
+  // {
+  //   title: 'Empresa',
+  //   path: '/company',
+  //   icon: icon('ic-blog'),
+  // },
   {
     title: 'Tablero',
     path: '/',
     icon: icon('ic-analytics'),
   },
-  {
-    title: 'User',
-    path: '/user',
-    icon: icon('ic-user'),
-  },
+  // {
+  //   title: 'User',
+  //   path: '/user',
+  //   icon: icon('ic-user'),
+  // },
   {
     title: 'Lotes',
-    path: '/batch',
+    path: '/batches',
     icon: icon('ic-user'),
   },
   {
@@ -48,14 +48,14 @@ export const navData = [
     path: '/blog',
     icon: icon('ic-blog'),
   },
-  {
-    title: 'Sign in',
-    path: '/sign-in',
-    icon: icon('ic-lock'),
-  },
-  {
-    title: 'Not found',
-    path: '/404',
-    icon: icon('ic-disabled'),
-  },
+  // {
+  //   title: 'Sign in',
+  //   path: '/sign-in',
+  //   icon: icon('ic-lock'),
+  // },
+  // {
+  //   title: 'Not found',
+  //   path: '/404',
+  //   icon: icon('ic-disabled'),
+  // },
 ];

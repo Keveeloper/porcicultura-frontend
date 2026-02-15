@@ -22,48 +22,23 @@ import { BatchTableHead } from '../batch-table-head';
 import { BatchTableNoData } from '../batch-table-no-data';
 import { BatchTableToolbar } from '../batch-table-toolbar';
 import { BatchTableEmptyRows } from '../batch-table-empty-rows'; 
+import { CreateBatchModal } from '../modals/create-batch-modal';
 import { emptyRows, applyFilter, getComparator } from '../utils';
 
 import type { BatchResponse, BatchInterface } from './types';
 
 // ----------------------------------------------------------------------
 
-const _batches: any = [
-  {
-    id: "1",
-    batch_number: "22",
-    created_at: "2026-02-03 11:58:10.970 -0500",
-    updated_at: "2026-02-03 11:58:10.970 -0500",
-  },
-  {
-    id: "2",
-    batch_number: "23",
-    created_at: "2026-02-03 11:58:10.970 -0500",
-    updated_at: "2026-02-03 11:58:10.970 -0500",
-  },
-  {
-    id: "3",
-    batch_number: "24",
-    created_at: "2026-02-03 11:58:10.970 -0500",
-    updated_at: "2026-02-03 11:58:10.970 -0500",
-  },
-
-]
-
-export function BatchView() {
+export function BatchesView() {
 
   const table = useTable();
 
+  const [ openModal, setOpenModal] = useState(false);
   const [ batches, setBatches ] = useState<BatchInterface[]>([]);
-  const [filterName, setFilterName] = useState('');
+  const [ filterName, setFilterName] = useState('');
 
   const dataFiltered: BatchInterface[] = applyFilter({
-    inputData: batches || [{
-      id: "",
-      batch_number: "",
-      createdAt: "",
-      updatedAt: "",
-    }],
+    inputData: batches,
     comparator: getComparator(table.order, table.orderBy),
     filterName,
   });
@@ -84,6 +59,7 @@ export function BatchView() {
     }
   }, []);
 
+  const handleOpenModal = () => setOpenModal(true);
   useEffect(() => {
     getAllBatches();
   }, [getAllBatches]);
@@ -104,8 +80,9 @@ export function BatchView() {
           variant="contained"
           color="inherit"
           startIcon={<Iconify icon="mingcute:add-line" />}
+          onClick={handleOpenModal}
         >
-          New user
+          Nuevo
         </Button>
       </Box>
 
@@ -136,8 +113,8 @@ export function BatchView() {
                 }
                 headLabel={[
                   { id: 'batch_number', label: 'No. lote' },
-                  { id: 'created_at', label: 'Fecha de creación' },
-                  { id: 'updated_at', label: 'Fecha de modificación' },
+                  { id: 'createdAt', label: 'Fecha de creación' },
+                  { id: 'updatedAt', label: 'Fecha de modificación' },
                   { id: '' },
                 ]}
               />
@@ -170,13 +147,18 @@ export function BatchView() {
         <TablePagination
           component="div"
           page={table.page}
-          count={_users.length}
+          count={batches.length}
           rowsPerPage={table.rowsPerPage}
           onPageChange={table.onChangePage}
           rowsPerPageOptions={[5, 10, 25]}
           onRowsPerPageChange={table.onChangeRowsPerPage}
         />
       </Card>
+      <CreateBatchModal 
+        open={openModal} 
+        onClose={() => setOpenModal(false)} 
+        onSuccess={getAllBatches}
+      />
     </DashboardContent>
   );
   

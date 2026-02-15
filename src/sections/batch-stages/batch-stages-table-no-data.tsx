@@ -1,0 +1,33 @@
+import type { TableRowProps } from '@mui/material/TableRow';
+
+import Box from '@mui/material/Box';
+import TableRow from '@mui/material/TableRow';
+import TableCell from '@mui/material/TableCell';
+import Typography from '@mui/material/Typography';
+
+// ----------------------------------------------------------------------
+
+type TableNoDataProps = TableRowProps & {
+  searchQuery: string;
+};
+
+export function BatchStagesTableNoData({ searchQuery, ...other }: TableNoDataProps) {
+  return (
+    <TableRow {...other}>
+      <TableCell align="center" colSpan={7}>
+        <Box sx={{ py: 15, textAlign: 'center' }}>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            No se encontraron lotes
+          </Typography>
+          {searchQuery && (
+            <Typography variant="body2">
+              No hay coincidencias para 
+              <strong> &quot;{searchQuery}&quot;</strong>.
+              <br /> Intenta modificar la busqueda
+            </Typography>
+          )}
+        </Box>
+      </TableCell>
+    </TableRow>
+  );
+}

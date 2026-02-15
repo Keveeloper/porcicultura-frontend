@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import Box from '@mui/material/Box';
 import Avatar from '@mui/material/Avatar';
@@ -13,19 +14,18 @@ import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 
-import { CreateStageModal } from './create-batch-stage-modal';
-
-import type { BatchInterface } from './view';
+import type { BatchStagesInterface } from './view';
 
 // ----------------------------------------------------------------------
 
 type UserTableRowProps = {
-  row: BatchInterface;
+  row: BatchStagesInterface;
   selected: boolean;
   onSelectRow: () => void;
 };
 
-export function BatchTableRow({ row, selected, onSelectRow }: UserTableRowProps) {
+export function BatchStagesTableRow({ row, selected, onSelectRow }: UserTableRowProps) {
+  const navigate = useNavigate();
   const [openModal, setOpenModal] = useState(false);
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
 
@@ -39,8 +39,13 @@ export function BatchTableRow({ row, selected, onSelectRow }: UserTableRowProps)
 
   const handleOpenModal = () => {
     setOpenModal(true);
-    handleClosePopover(); // Cierra el menú de los tres puntitos
+    handleClosePopover();
   };
+
+  const handleViewBatch = useCallback(() => {
+    handleClosePopover();
+    navigate(`/batches/${row.id}/batch-stages`);
+  }, [navigate, row.id, handleClosePopover]);
 
   return (
     <>
@@ -57,27 +62,11 @@ export function BatchTableRow({ row, selected, onSelectRow }: UserTableRowProps)
               alignItems: 'center',
             }}
           >
-            {/* <Avatar alt={row.name} src={row.avatarUrl} /> */}
-            {row.batch_number}
+            {row.initial_pigs}
           </Box>
         </TableCell>
-
-        <TableCell>{row.createdAt}</TableCell>
-
-        <TableCell>{row.updatedAt}</TableCell>
-
-        {/* <TableCell align="center">
-          {row.isVerified ? (
-            <Iconify width={22} icon="solar:check-circle-bold" sx={{ color: 'success.main' }} />
-          ) : (
-            '-'
-          )}
-        </TableCell> */}
-
-        {/* <TableCell>
-          <Label color={(row.status === 'banned' && 'error') || 'success'}>{row.status}</Label>
-        </TableCell> */}
-
+        <TableCell><Label color={(row.stage_type === 'pre-nursery' ? 'primary' : row.stage_type === 'growing' ? 'secondary' : 'info') }>{row.stage_type}</Label></TableCell>
+        <TableCell><Label color={(row.status === 'pending' ? 'warning' : row.status === 'in_progress' ? 'primary' : 'success') }>{row.status}</Label></TableCell>
         <TableCell align="right">
           <IconButton onClick={handleOpenPopover}>
             <Iconify icon="eva:more-vertical-fill" />
@@ -108,22 +97,28 @@ export function BatchTableRow({ row, selected, onSelectRow }: UserTableRowProps)
             },
           }}
         >
-          <MenuItem onClick={handleOpenModal}>
-            <Iconify icon="solar:pen-bold" />
-            Edit
+          <MenuItem onClick={handleOpenModal} sx={{'&:hover': {
+            color: '#1877F2',
+            cursor: 'pointer',
+          },}}>
+            <Iconify icon="mingcute:add-line" />
+            Crear etapa
           </MenuItem>
 
-          <MenuItem onClick={handleClosePopover} sx={{ color: 'error.main' }}>
-            <Iconify icon="solar:trash-bin-trash-bold" />
-            Delete
+          <MenuItem onClick={handleViewBatch} sx={{'&:hover': {
+            color: '#1877F2',
+            cursor: 'pointer',
+          },}}>
+            <Iconify icon="solar:eye-bold" />
+            Ver
           </MenuItem>
         </MenuList>
       </Popover>
-      <CreateStageModal 
+      {/* <CreateBatchStageModal 
         batchId={row.id} 
         open={openModal} 
         onClose={() => setOpenModal(false)} 
-      />
+      /> */}
     </>
   );
 }

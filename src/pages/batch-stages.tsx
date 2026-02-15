@@ -1,6 +1,6 @@
 import { CONFIG } from 'src/config-global';
 
-import { BatchView } from 'src/sections/batch/view';
+import { BatcheStagesView } from 'src/sections/batch-stages/view';
 
 // ----------------------------------------------------------------------
 
@@ -9,7 +9,7 @@ export default function Page() {
     <>
       <title>{`Users - ${CONFIG.appName}`}</title>
 
-      <BatchView />
+      <BatcheStagesView />
     </>
   );
 }

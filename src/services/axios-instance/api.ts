@@ -6,7 +6,9 @@
  * Last modified by:     Kevind Ospina
  * Last modified date    Ene 08, 2026
  */
-import axios, { type AxiosInstance } from 'axios';
+import axios, { AxiosError, type AxiosInstance } from 'axios';
+
+import { useAuthStore } from 'src/auth/auth-store';
 
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -17,10 +19,24 @@ const api: AxiosInstance = axios.create({
   timeout: 120000, 
 });
 
-// ********** PENDIENTE DE IMPLEMENTAR INTERCEPTORES AQUÍ **********
-// Usaremos interceptores más tarde para:
-// 1. Adjuntar el JWT de NestJS a todas las peticiones salientes.
-// 2. Manejar automáticamente los errores 401 (Unauthorized) cuando el token expire.
+// Interceptor de respuesta para manejar errores globales
+api.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    if (error.response && error.response.status === 401) {
+      console.warn('Sesión inválida o expirada.');
 
+      // 1. Limpiamos el estado de Zustand de forma imperativa
+      // En Zustand, puedes acceder a las acciones fuera de hooks usando getState()
+      useAuthStore.getState().setUser(null);
+
+      // 2. Redirección al login
+      if (!window.location.pathname.includes('/sign-in')) {
+        window.location.href = '/sign-in';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;
