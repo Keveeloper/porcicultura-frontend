@@ -1,6 +1,6 @@
-import type { UserProps } from './user-table-row';
-
 // ----------------------------------------------------------------------
+
+import { BatchInterface } from "./view";
 
 export const visuallyHidden = {
   border: 0,
@@ -53,25 +53,25 @@ export function getComparator<Key extends keyof any>(
 // ----------------------------------------------------------------------
 
 type ApplyFilterProps = {
-  inputData: UserProps[];
+  inputData: BatchInterface[];
   filterName: string;
   comparator: (a: any, b: any) => number;
 };
 
 export function applyFilter({ inputData, comparator, filterName }: ApplyFilterProps) {
-  const stabilizedThis = inputData.map((el, index) => [el, index] as const);
+  const stabilizedThis = inputData?.map((el: any, index: any) => [el, index] as const);
 
-  stabilizedThis.sort((a, b) => {
+  stabilizedThis.sort((a: any, b: any) => {
     const order = comparator(a[0], b[0]);
     if (order !== 0) return order;
     return a[1] - b[1];
   });
 
-  inputData = stabilizedThis.map((el) => el[0]);
+  inputData = stabilizedThis.map((el: any) => el[0]);
 
   if (filterName) {
     inputData = inputData.filter(
-      (user) => user.name.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
+      (user: any) => user.batch_number.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
     );
   }
 

@@ -14,7 +14,7 @@ import api from 'src/services/axios-instance/api';
 import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
-
+ 
 export function RegisterView() {
   const router = useRouter();
   const [ companyName, setCompanyName ] = useState('');

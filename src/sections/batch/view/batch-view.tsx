@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -10,36 +10,85 @@ import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
 
 import { _users } from 'src/_mock';
+import api from 'src/services/axios-instance/api';
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 
-import { TableNoData } from '../table-no-data';
-import { UserTableRow } from '../user-table-row';
-import { UserTableHead } from '../user-table-head';
-import { TableEmptyRows } from '../table-empty-rows';
-import { UserTableToolbar } from '../user-table-toolbar';
+// import { TableNoData } from '../batch-table-no-data';
+import { BatchTableRow } from '../batch-table-row'; 
+import { BatchTableHead } from '../batch-table-head';
+import { BatchTableNoData } from '../batch-table-no-data';
+import { BatchTableToolbar } from '../batch-table-toolbar';
+import { BatchTableEmptyRows } from '../batch-table-empty-rows'; 
 import { emptyRows, applyFilter, getComparator } from '../utils';
 
-import type { UserProps } from '../user-table-row';
+import type { BatchResponse, BatchInterface } from './types';
 
 // ----------------------------------------------------------------------
 
+const _batches: any = [
+  {
+    id: "1",
+    batch_number: "22",
+    created_at: "2026-02-03 11:58:10.970 -0500",
+    updated_at: "2026-02-03 11:58:10.970 -0500",
+  },
+  {
+    id: "2",
+    batch_number: "23",
+    created_at: "2026-02-03 11:58:10.970 -0500",
+    updated_at: "2026-02-03 11:58:10.970 -0500",
+  },
+  {
+    id: "3",
+    batch_number: "24",
+    created_at: "2026-02-03 11:58:10.970 -0500",
+    updated_at: "2026-02-03 11:58:10.970 -0500",
+  },
+
+]
+
 export function BatchView() {
+
   const table = useTable();
 
+  const [ batches, setBatches ] = useState<BatchInterface[]>([]);
   const [filterName, setFilterName] = useState('');
 
-  const dataFiltered: UserProps[] = applyFilter({
-    inputData: _users,
+  const dataFiltered: BatchInterface[] = applyFilter({
+    inputData: batches || [{
+      id: "",
+      batch_number: "",
+      createdAt: "",
+      updatedAt: "",
+    }],
     comparator: getComparator(table.order, table.orderBy),
     filterName,
   });
+  // const dataFiltered: BatchProps[] = [];
 
-  const notFound = !dataFiltered.length && !!filterName;
+  // const notFound = !dataFiltered.length && !!filterName;
+  const notFound = dataFiltered.length === 0;
 
-  return (
+  const getAllBatches = useCallback(async () => {
+    try {
+      const response = await api.get<BatchResponse>('/batches');
+      const batchData = response.data;
+      console.log('batchData: ', batchData);
+      
+      setBatches(batchData.data);
+    } catch (e) {
+      console.error('Error al obtener los lotes:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    getAllBatches();
+  }, [getAllBatches]);
+
+   return (
     <DashboardContent>
       <Box
         sx={{
@@ -49,7 +98,7 @@ export function BatchView() {
         }}
       >
         <Typography variant="h4" sx={{ flexGrow: 1 }}>
-          Users
+          Lotes
         </Typography>
         <Button
           variant="contained"
@@ -61,7 +110,7 @@ export function BatchView() {
       </Box>
 
       <Card>
-        <UserTableToolbar
+        <BatchTableToolbar
           numSelected={table.selected.length}
           filterName={filterName}
           onFilterName={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,7 +122,7 @@ export function BatchView() {
         <Scrollbar>
           <TableContainer sx={{ overflow: 'unset' }}>
             <Table sx={{ minWidth: 800 }}>
-              <UserTableHead
+              <BatchTableHead
                 order={table.order}
                 orderBy={table.orderBy}
                 rowCount={_users.length}
@@ -86,11 +135,9 @@ export function BatchView() {
                   )
                 }
                 headLabel={[
-                  { id: 'name', label: 'Name' },
-                  { id: 'company', label: 'Company' },
-                  { id: 'role', label: 'Role' },
-                  { id: 'isVerified', label: 'Verified', align: 'center' },
-                  { id: 'status', label: 'Status' },
+                  { id: 'batch_number', label: 'No. lote' },
+                  { id: 'created_at', label: 'Fecha de creación' },
+                  { id: 'updated_at', label: 'Fecha de modificación' },
                   { id: '' },
                 ]}
               />
@@ -101,7 +148,7 @@ export function BatchView() {
                     table.page * table.rowsPerPage + table.rowsPerPage
                   )
                   .map((row) => (
-                    <UserTableRow
+                    <BatchTableRow
                       key={row.id}
                       row={row}
                       selected={table.selected.includes(row.id)}
@@ -109,12 +156,12 @@ export function BatchView() {
                     />
                   ))}
 
-                <TableEmptyRows
+                <BatchTableEmptyRows
                   height={68}
                   emptyRows={emptyRows(table.page, table.rowsPerPage, _users.length)}
                 />
 
-                {notFound && <TableNoData searchQuery={filterName} />}
+                {notFound && <BatchTableNoData searchQuery={filterName} />}
               </TableBody>
             </Table>
           </TableContainer>
@@ -132,13 +179,14 @@ export function BatchView() {
       </Card>
     </DashboardContent>
   );
+  
 }
 
 // ----------------------------------------------------------------------
 
 export function useTable() {
   const [page, setPage] = useState(0);
-  const [orderBy, setOrderBy] = useState('name');
+  const [orderBy, setOrderBy] = useState('batch_number');
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [selected, setSelected] = useState<string[]>([]);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');

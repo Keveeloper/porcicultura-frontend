@@ -43,6 +43,13 @@ export const _users = [...Array(24)].map((_, index) => ({
     ][index] || 'UI Designer',
 }));
 
+export const _batches = [...Array(24)].map((_, index) => ({
+  id: _id(index),
+  batch_number: _fullName(index),
+  created_at: _company(index),
+  updated_at: _boolean(index),
+}));
+
 // ----------------------------------------------------------------------
 
 export const _posts = [...Array(23)].map((_, index) => ({

@@ -11,20 +11,21 @@ type TableNoDataProps = TableRowProps & {
   searchQuery: string;
 };
 
-export function TableNoData({ searchQuery, ...other }: TableNoDataProps) {
+export function BatchTableNoData({ searchQuery, ...other }: TableNoDataProps) {
   return (
     <TableRow {...other}>
       <TableCell align="center" colSpan={7}>
         <Box sx={{ py: 15, textAlign: 'center' }}>
           <Typography variant="h6" sx={{ mb: 1 }}>
-            No se encontraron resultados
+            No se encontraron lotes
           </Typography>
-
-          <Typography variant="body2">
-            No hay coincidencias para 
-            <strong> &quot;{searchQuery}&quot;</strong>.
-            <br /> Intenta modificar la busqueda
-          </Typography>
+          {searchQuery && (
+            <Typography variant="body2">
+              No hay coincidencias para 
+              <strong> &quot;{searchQuery}&quot;</strong>.
+              <br /> Intenta modificar la busqueda
+            </Typography>
+          )}
         </Box>
       </TableCell>
     </TableRow>

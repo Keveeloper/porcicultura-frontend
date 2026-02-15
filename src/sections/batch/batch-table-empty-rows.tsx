@@ -10,7 +10,7 @@ type TableEmptyRowsProps = TableRowProps & {
   height?: number;
 };
 
-export function TableEmptyRows({ emptyRows, height, sx, ...other }: TableEmptyRowsProps) {
+export function BatchTableEmptyRows({ emptyRows, height, sx, ...other }: TableEmptyRowsProps) {
   if (!emptyRows) {
     return null;
   }

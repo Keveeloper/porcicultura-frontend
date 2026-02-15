@@ -47,6 +47,9 @@ export function SignInView() {
         },
       });
       const userData = response.data;
+      console.log('userData: ', userData);
+      console.log('firebaseIdToken: ', firebaseIdToken);
+      
       setUser(userData);      
       if (userData?.company !== null && userData?.company !== undefined) {        
         router.push('/');
