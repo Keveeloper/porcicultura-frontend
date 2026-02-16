@@ -12,6 +12,7 @@ export interface BatchStageResponse {
     status: string,
     batch: BatchInterface,
     dailyMeals: DailyMealInterface[],
+    metrics: MetricsInterface,
     createdAt: string,
     updatedAt: string,
 }
@@ -31,4 +32,12 @@ export interface DailyMealInterface {
     observations: string,
     createdAt: string,
     updatedAt: string
+}
+
+export interface MetricsInterface {
+    cumulative_feed: string,
+    cumulative_mortality: number,
+    mortality_percentage: string,
+    current_pig_balance: number,
+    fcr: string,
 }
