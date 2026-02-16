@@ -61,7 +61,7 @@ export function BatcheStagesView() {
     } catch (e) {
       console.error('Error al obtener los lotes:', e);
     }
-  }, []);
+  }, [batchId]);
 
   const handleOpenModal = () => setOpenModal(true);
   useEffect(() => {
