@@ -16,7 +16,8 @@ import {
   TableHead, 
   TextField, 
   Typography, 
-  TableContainer, 
+  TableContainer,
+  Chip, 
 } from '@mui/material';
 
 import api from 'src/services/axios-instance/api';
@@ -32,11 +33,11 @@ const DAYS_NAME = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Vierne
 export function BatchStageDetailsView() {
   const { batchId, batchStageId } = useParams();
   const [currentWeek, setCurrentWeek] = useState(0);
-  const [batchStageInfo, setBatchStageInfo] = useState<BatchStageResponse>();
-  
-  // Estado local para los inputs de la tabla (Alimento y Muertes)
-  // Usamos un objeto donde la llave es la fecha YYYY-MM-DD
+  const [batchStageInfo, setBatchStageInfo] = useState<any>();
   const [formData, setFormData] = useState<Record<string, { feed_kg: number; mortality: number }>>({});
+
+  // 1. Determinar si la etapa está finalizada
+  const isCompleted = batchStageInfo?.status === 'completed';
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setCurrentWeek(newValue);
@@ -45,13 +46,16 @@ export function BatchStageDetailsView() {
   const getOneBatchStage = useCallback(async () => {
     if (!batchId || !batchStageId) return;
     try {
-      const response = await api.get<BatchStageResponse>(`/batch-stages/batch/${batchId}/batch-stage/${batchStageId}`);
+      const response = await api.get<any>(`/batch-stages/batch/${batchId}/batch-stage/${batchStageId}`);
       const data = response.data;
+      console.log('Response: ', response);
+      
+      console.log('BatchStage data: ', data);
+      
       setBatchStageInfo(data);
 
-      // Sincronizar datos existentes de la API al estado del formulario
       const initialForm: any = {};
-      data.dailyMeals.forEach((meal) => {
+      data.dailyMeals.forEach((meal: any) => {
         initialForm[meal.date] = {
           feed_kg: Number(meal.feed_kg),
           mortality: meal.mortality,
@@ -67,177 +71,208 @@ export function BatchStageDetailsView() {
     getOneBatchStage();
   }, [getOneBatchStage]);
 
-  // Generar los 7 días de la semana actual basados en start_date
   const weekDays = useMemo(() => {
     if (!batchStageInfo?.start_date) return [];
-    
-    const start = new Date(batchStageInfo.start_date);
-    // Ajuste por zona horaria para evitar desfases de un día
-    start.setMinutes(start.getMinutes() + start.getTimezoneOffset());
+    const [year, month, day] = batchStageInfo.start_date.split('-').map(Number);
+    const start = new Date(year, month - 1, day);
 
     return [...Array(7)].map((_, index) => {
       const currentDate = new Date(start);
       currentDate.setDate(start.getDate() + (currentWeek * 7) + index);
-      
-      const dateStr = currentDate.toISOString().split('T')[0];
+      const y = currentDate.getFullYear();
+      const m = String(currentDate.getMonth() + 1).padStart(2, '0');
+      const d = String(currentDate.getDate()).padStart(2, '0');
+      const dateStr = `${y}-${m}-${d}`;
+
       return {
         dateStr,
         dayLabel: DAYS_NAME[currentDate.getDay()],
-        displayDate: currentDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        displayDate: `${d}/${m}/${y}`
       };
     });
   }, [batchStageInfo?.start_date, currentWeek]);
 
+  // 2. Validación para mostrar botón de finalizar
+  const canFinishStage = useMemo(() => {
+    const isLastWeek = currentWeek === (batchStageInfo?.number_of_weeks || 7) - 1;
+    const hasAllData = Object.keys(formData).length >= (batchStageInfo?.number_of_weeks || 7) * 7;
+    return isLastWeek && hasAllData && !isCompleted;
+  }, [currentWeek, formData, batchStageInfo?.number_of_weeks, isCompleted]);
+
   const handleInputChange = (date: string, field: 'feed_kg' | 'mortality', value: string) => {
+    if (isCompleted) return;
     setFormData((prev) => ({
       ...prev,
       [date]: {
         ...prev[date],
-        [field]: Number(value)
+        [field]: value === '' ? 0 : Number(value)
       }
     }));
   };
 
   const handleSave = async () => {
-    // Aquí construirías el array para enviar al endpoint POST /daily-meals
-    const recordsToSave = Object.entries(formData).map(([date, values]) => ({
-      batch_stage_id: batchStageId,
-      date,
-      ...values
-    }));
-    
+    const recordsToSave = weekDays.map((day) => {
+      const rowData = formData[day.dateStr] || { feed_kg: 0, mortality: 0 };
+      return {
+        date: day.dateStr,
+        feed_kg: rowData.feed_kg,
+        mortality: rowData.mortality,
+      };
+    });
+
     try {
       await api.post(`/daily-meals/batch/${batchId}/batch-stage/${batchStageId}`, recordsToSave);
       alert('Cambios guardados exitosamente');
-      getOneBatchStage(); // Refrescar métricas del sidebar
+      getOneBatchStage();
     } catch (error) {
       console.error('Error al guardar:', error);
     }
   };
 
+  const handleFinishStage = async () => {
+    try {
+      // Endpoint que deberás crear en NestJS para cambiar status a 'completed'
+      // await api.patch(`/batch-stages/${batchStageId}/status`, { status: 'completed' });
+      alert('Etapa finalizada exitosamente. Los datos ahora son de solo lectura.');
+      getOneBatchStage();
+    } catch (error) {
+      console.error('Error al finalizar etapa:', error);
+    }
+  };
+
   return (
     <DashboardContent>
-      {/* Header con Progreso */}
       <Stack spacing={3} sx={{ mb: 3 }}>
         <Card sx={{ p: 3 }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
             <Box>
-                <Typography variant="h4">Suministro de alimentación</Typography>
-                <Typography variant="body2" color="text.secondary">
-                    Lote #{batchStageInfo?.batch.batch_number} • {batchStageInfo?.stage_type.toUpperCase()}
-                </Typography>
+              <Typography variant="h4">Suministro de alimentación</Typography>
+              <Typography variant="body2" color="text.secondary">
+                Lote #{batchStageInfo?.batch?.batch_number} • {batchStageInfo?.stage_type?.toUpperCase()}
+              </Typography>
             </Box>
-            <Button 
+            
+            {/* Botón superior dinámico */}
+            {/* {canFinishStage ? ( */}
+              <Button 
                 variant="contained" 
-                color="primary" 
-                onClick={handleSave}
-                startIcon={<Iconify icon="socials:twitter" />}
-            >
-                Guardar cambios
-            </Button>
+                color="success" 
+                onClick={handleFinishStage}
+                startIcon={<Iconify icon="eva:checkmark-fill" />}
+                disabled={!canFinishStage}
+              >
+                Finalizar Etapa
+              </Button>
+            {/* // ) : isCompleted && ( */}
+            {/* //   <Chip label="Etapa Finalizada" color="success" icon={<Iconify icon="eva:checkmark-fill" />} /> */}
+            {/* // )} */}
           </Stack>
 
           <Typography variant="subtitle2" sx={{ mb: 2 }}>
-            Progreso Ciclo: Semana {currentWeek + 1} de {batchStageInfo?.number_of_weeks}
+            Progreso Ciclo: {isCompleted ? '100%' : `Semana ${currentWeek + 1} de ${batchStageInfo?.number_of_weeks}`}
           </Typography>
           
           <Box sx={{ width: '100%', bgcolor: 'background.neutral', height: 8, borderRadius: 1, mb: 1 }}>
             <Box sx={{ 
-              width: `${((currentWeek + 1) / (batchStageInfo?.number_of_weeks || 7)) * 100}%`, 
-              bgcolor: 'primary.main', height: '100%', borderRadius: 1, transition: 'width 0.4s ease'
+              width: isCompleted ? '100%' : `${((currentWeek + 1) / (batchStageInfo?.number_of_weeks || 7)) * 100}%`, 
+              bgcolor: isCompleted ? 'success.main' : 'primary.main', 
+              height: '100%', borderRadius: 1, transition: 'width 0.4s ease'
             }} />
           </Box>
-          <Stack direction="row" justifyContent="space-between">
-            {[...Array(batchStageInfo?.number_of_weeks || 7)].map((_, i) => (
-              <Typography key={i} variant="caption" sx={{ 
-                color: i <= currentWeek ? 'primary.main' : 'text.disabled', 
-                fontWeight: 'bold' 
-              }}>
-                S{i + 1}
-              </Typography>
-            ))}
-          </Stack>
         </Card>
       </Stack>
 
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
         <Box sx={{ flex: { md: '0 0 66.666%' }, width: '100%' }}>
-          <Card>
-            <Tabs value={currentWeek} onChange={handleTabChange} variant="scrollable" sx={{ px: 2, pt: 2, borderBottom: 1, borderColor: 'divider' }}>
-              {[...Array(batchStageInfo?.number_of_weeks || 7)].map((_, i) => (
-                <Tab key={i} label={`Semana ${i + 1}`} />
-              ))}
-            </Tabs>
+          <Stack spacing={3}>
+            <Card>
+              <Tabs value={currentWeek} onChange={handleTabChange} variant="scrollable" sx={{ px: 2, pt: 2, borderBottom: 1, borderColor: 'divider' }}>
+                {[...Array(batchStageInfo?.number_of_weeks || 7)].map((_, i) => (
+                  <Tab key={i} label={`Semana ${i + 1}`} />
+                ))}
+              </Tabs>
 
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Fecha</TableCell>
-                    <TableCell>Día</TableCell>
-                    <TableCell align="center">Alimento (kg)</TableCell>
-                    <TableCell align="center">Muertes</TableCell>
-                    <TableCell align="right">Saldo Cerdos</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {weekDays.map((day) => {
-                    const rowData = formData[day.dateStr] || { feed_kg: 0, mortality: 0 };
-                    return (
-                      <TableRow key={day.dateStr} hover>
-                        <TableCell sx={{ color: 'text.secondary' }}>{day.displayDate}</TableCell>
-                        <TableCell sx={{ fontWeight: '600' }}>{day.dayLabel}</TableCell>
-                        <TableCell align="center">
-                          <TextField 
-                            size="small" 
-                            type="number" 
-                            value={rowData.feed_kg}
-                            onChange={(e) => handleInputChange(day.dateStr, 'feed_kg', e.target.value)}
-                            sx={{ width: 90 }} 
-                            inputProps={{ style: { textAlign: 'center' } }} 
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <TextField 
-                            size="small" 
-                            type="number" 
-                            value={rowData.mortality}
-                            onChange={(e) => handleInputChange(day.dateStr, 'mortality', e.target.value)}
-                            sx={{ width: 70 }} 
-                            inputProps={{ style: { textAlign: 'center' } }} 
-                          />
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                            {/* Cálculo simple de balance visual */}
-                            {batchStageInfo?.initial_pigs}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Card>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Fecha</TableCell>
+                      <TableCell>Día</TableCell>
+                      <TableCell align="center">Alimento (kg)</TableCell>
+                      <TableCell align="center">Muertes</TableCell>
+                      <TableCell align="right">Saldo Cerdos</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {weekDays.map((day) => {
+                      const rowData = formData[day.dateStr] || { feed_kg: 0, mortality: 0 };
+                      return (
+                        <TableRow key={day.dateStr} hover>
+                          <TableCell sx={{ color: 'text.secondary' }}>{day.displayDate}</TableCell>
+                          <TableCell sx={{ fontWeight: '600' }}>{day.dayLabel}</TableCell>
+                          <TableCell align="center">
+                            <TextField 
+                              size="small" 
+                              type="number"
+                              disabled={isCompleted}
+                              value={rowData.feed_kg === 0 ? '' : rowData.feed_kg}
+                              onChange={(e) => handleInputChange(day.dateStr, 'feed_kg', e.target.value)}
+                              sx={{ width: 90 }} 
+                              slotProps={{ htmlInput: { style: { textAlign: 'center' } } }}
+                            />
+                          </TableCell>
+                          <TableCell align="center">
+                            <TextField 
+                              size="small" 
+                              type="number"
+                              disabled={isCompleted}
+                              value={rowData.mortality === 0 ? '' : rowData.mortality}
+                              onChange={(e) => handleInputChange(day.dateStr, 'mortality', e.target.value)}
+                              sx={{ width: 70 }} 
+                              slotProps={{ htmlInput: { style: { textAlign: 'center' } } }}
+                            />
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                            {Number(batchStageInfo?.initial_pigs || 0) - (rowData.mortality || 0)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              {/* Botón de guardar abajo para mejor accesibilidad */}
+              {!isCompleted && (
+                <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button 
+                    variant="contained" 
+                    color="primary" 
+                    onClick={handleSave}
+                    startIcon={<Iconify icon="eva:checkmark-fill" />}
+                  >
+                    Guardar Semana {currentWeek + 1}
+                  </Button>
+                </Box>
+              )}
+            </Card>
+          </Stack>
         </Box>
 
-        {/* Sidebar con Métricas Reales de la API */}
         <Box sx={{ flex: { md: '1 1 auto' }, width: '100%' }}>
+          {/* Sidebar igual que antes */}
           <Card sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Iconify icon="socials:twitter" width={24} /> Resultados de Etapa
+              <Iconify icon="eva:checkmark-fill" width={24} /> Resultados de Etapa
             </Typography>
             <Divider sx={{ mb: 3 }} />
-
             <Stack spacing={3}>
               <ResultItem label="Consumo Acumulado" value={`${batchStageInfo?.metrics?.cumulative_feed} kg`} />
               <ResultItem label="Mortalidad Total" value={batchStageInfo?.metrics?.cumulative_mortality} trend={`${batchStageInfo?.metrics?.mortality_percentage}%`} trendColor="error.main" />
-              
-              <Box sx={{ p: 2, bgcolor: 'primary.lighter', borderRadius: 1.5, border: '1px dashed', borderColor: 'primary.main' }}>
-                <Typography variant="overline" display="block" sx={{ color: 'primary.darker' }}>FCR (Conversión)</Typography>
-                <Typography variant="h4" sx={{ color: 'primary.dark' }}>{batchStageInfo?.metrics?.fcr}</Typography>
-                <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 'bold' }}>Objetivo: &lt; 1.45</Typography>
+              <Box sx={{ p: 2, bgcolor: isCompleted ? 'success.lighter' : 'primary.lighter', borderRadius: 1.5, border: '1px dashed', borderColor: isCompleted ? 'success.main' : 'primary.main' }}>
+                <Typography variant="overline" display="block">FCR (Conversión)</Typography>
+                <Typography variant="h4">{batchStageInfo?.metrics?.fcr}</Typography>
               </Box>
-
               <Box sx={{ p: 2, bgcolor: 'background.neutral', borderRadius: 1.5 }}>
                 <Typography variant="overline" display="block">Inventario Actual</Typography>
                 <Typography variant="h4">{batchStageInfo?.metrics?.current_pig_balance} Cerdos</Typography>
