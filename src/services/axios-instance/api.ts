@@ -6,18 +6,28 @@
  * Last modified by:     Kevind Ospina
  * Last modified date    Ene 08, 2026
  */
-import axios, { AxiosError, type AxiosInstance } from 'axios';
+import axios, { type AxiosError, type AxiosInstance, type AxiosRequestConfig } from 'axios';
 
 import { useAuthStore } from 'src/auth/auth-store';
 
-const api: AxiosInstance = axios.create({
+// Definimos que nuestras peticiones devuelven T directamente, no AxiosResponse<T>
+export interface CustomAxiosInstance extends AxiosInstance {
+  get<T = any>(url: string, config?: AxiosRequestConfig): Promise<T>;
+  post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>;
+  patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>;
+  put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>;
+  delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<T>;
+}
+
+// const api: AxiosInstance = axios.create({
+const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 120000, 
-});
+}) as CustomAxiosInstance;
 
 // Interceptor de respuesta para manejar errores globales
 api.interceptors.response.use(
@@ -35,7 +45,7 @@ api.interceptors.response.use(
     }
     // ----------------------------------
     
-    return response;
+    return response.data?.data !== undefined ? response.data.data : response.data;
   },
   (error: AxiosError) => {
     if (error.response && error.response.status === 401) {

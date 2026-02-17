@@ -1,7 +1,4 @@
-export interface BatchStagesResponse {
-    data: BatchStagesInterface[],
-}
-
+export type BatchStagesResponse = BatchStagesInterface[];
 export interface BatchStagesInterface {
     id: string,
     stage_type: string,

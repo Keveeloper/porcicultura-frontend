@@ -1,4 +1,5 @@
-export interface RegisterInterface {
+export interface RegisterResponse {
+  message: string,
   company: Company;
 }
 

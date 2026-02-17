@@ -50,10 +50,10 @@ export function BatchesView() {
   const getAllBatches = useCallback(async () => {
     try {
       const response = await api.get<BatchResponse>('/batches');
-      const batchData = response.data;
+      const batchData = response;
       console.log('batchData: ', batchData);
       
-      setBatches(batchData.data);
+      setBatches(batchData);
     } catch (e) {
       console.error('Error al obtener los lotes:', e);
     }

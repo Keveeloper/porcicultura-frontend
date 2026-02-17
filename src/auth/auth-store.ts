@@ -15,15 +15,27 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   loading: true,
+  // checkAuth: async () => {
+  //   try {
+  //     set({ loading: true });
+  //     const user = await api.get('/auth/me');
+  //     set({ user, loading: false });
+  //   } catch (error) {
+  //     set({ user: null, loading: false });
+  //     console.log('Auth store error: ', error);
+      
+  //   }
+  // },
   checkAuth: async () => {
     try {
       set({ loading: true });
-      const response = await api.get('/auth/me');
-      set({ user: response.data, loading: false });
+      // response ya contiene directamente el objeto User gracias al interceptor
+      const user = await api.get<User>('/auth/me');
+      
+      set({ user, loading: false }); // Ya no uses .data
     } catch (error) {
       set({ user: null, loading: false });
       console.log('Auth store error: ', error);
-      
     }
   },
   setUser: (user) => set({ user }),

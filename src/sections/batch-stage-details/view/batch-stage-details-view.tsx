@@ -46,8 +46,8 @@ export function BatchStageDetailsView() {
   const getOneBatchStage = useCallback(async () => {
     if (!batchId || !batchStageId) return;
     try {
-      const response = await api.get<any>(`/batch-stages/batch/${batchId}/batch-stage/${batchStageId}`);
-      const data = response.data;
+      const response = await api.get<BatchStageResponse>(`/batch-stages/batch/${batchId}/batch-stage/${batchStageId}`);
+      const data = response;
       console.log('Response: ', response);
       
       console.log('BatchStage data: ', data);
@@ -121,8 +121,9 @@ export function BatchStageDetailsView() {
     });
 
     try {
-      await api.post(`/daily-meals/batch/${batchId}/batch-stage/${batchStageId}`, recordsToSave);
+      const response = await api.post<BatchStageResponse>(`/daily-meals/batch/${batchId}/batch-stage/${batchStageId}`, recordsToSave);
       alert('Cambios guardados exitosamente');
+      // setBatchStageInfo(response);
       getOneBatchStage();
     } catch (error) {
       console.error('Error al guardar:', error);

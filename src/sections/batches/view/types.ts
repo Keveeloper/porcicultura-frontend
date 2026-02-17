@@ -1,7 +1,4 @@
-export interface BatchResponse {
-    data: BatchInterface[],
-}
-
+export type BatchResponse = BatchInterface[];
 export interface BatchInterface {
     id: string,
     batch_number: string,

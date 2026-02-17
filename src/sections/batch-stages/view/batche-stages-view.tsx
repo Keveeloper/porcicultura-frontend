@@ -54,10 +54,10 @@ export function BatcheStagesView() {
     if (!batchId) return;
     try {
       const response = await api.get<BatchStagesResponse>(`/batch-stages/batch/${batchId}`);
-      const batchData = response.data;
+      const batchData = response;
       console.log('batchData: ', batchData);
       
-      setBatches(batchData.data);
+      setBatches(batchData);
     } catch (e) {
       console.error('Error al obtener los lotes:', e);
     }

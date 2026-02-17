@@ -41,12 +41,9 @@ export function SignInView() {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const firebaseIdToken = await result.user.getIdToken();
-      const response = await api.post<User>('/auth/google/login', {}, {
-        headers: {
-          'Authorization': `Bearer ${firebaseIdToken}`, 
-        },
+      const userData = await api.post<User>('/auth/google/login', {}, {
+        headers: { 'Authorization': `Bearer ${firebaseIdToken}` },
       });
-      const userData = response.data;
       console.log('userData: ', userData);
       console.log('firebaseIdToken: ', firebaseIdToken);
       

@@ -13,6 +13,8 @@ import api from 'src/services/axios-instance/api';
 
 import { Iconify } from 'src/components/iconify';
 
+import type { RegisterResponse } from './types/types';
+
 // ----------------------------------------------------------------------
  
 export function RegisterView() {
@@ -22,12 +24,12 @@ export function RegisterView() {
 
   const handleRegister = useCallback(async () => {
     try {
-      const response = await api.post('/companies', {
+      const response = await api.post<RegisterResponse>('/companies', {
         name: companyName,
         nit
       }, {});
       console.log('Register response: ', response);
-      if (response.data.company) {
+      if (response.company) {
         router.push('/');
       }
 
