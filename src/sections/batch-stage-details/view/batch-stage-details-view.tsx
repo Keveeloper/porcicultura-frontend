@@ -195,7 +195,8 @@ export function BatchStageDetailsView() {
       </Stack>
 
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
-        <Box sx={{ flex: { md: '0 0 66.666%' }, width: '100%' }}>
+        {/* <Box sx={{ flex: { md: '0 0 66.666%' }, width: '100%' }}> */}
+        <Box sx={{ flex: { md: '0 0 60%' }, width: '100%' }}>
           <Stack spacing={3}>
             <Card>
               <Tabs value={currentWeek} onChange={handleTabChange} variant="scrollable" sx={{ px: 0.5, pt: 2, borderBottom: 1, borderColor: 'divider' }}>
@@ -226,7 +227,7 @@ export function BatchStageDetailsView() {
                         <TableRow key={day.dateStr} hover sx={{
                           height: '10px', // Set the desired height
                           '& .MuiTableCell-root': {
-                            padding: '12px 20px', // Adjust padding to fit the new height
+                            padding: '10px 20px', // Adjust padding to fit the new height
                           },
                         }}>
                           <TableCell sx={{ color: 'text.secondary' }}>{day.displayDate}</TableCell>
@@ -285,26 +286,21 @@ export function BatchStageDetailsView() {
             </Typography>
             <Divider sx={{ mb: 2 }} />
             <Stack spacing={2}>
-              <Box sx={{height: '80px', display: 'flex', gap: 2}}>
+              <Box sx={{height: '100px', display: 'flex', gap: 2}}>
                 <ResultItem label="Consumo Acumulado" value={`${batchStageInfo?.metrics?.cumulative_feed} kg`}/>
                 <ResultItem label="Mortalidad Total" value={batchStageInfo?.metrics?.cumulative_mortality} trend={`${batchStageInfo?.metrics?.mortality_percentage}%`} trendColor="error.main" />
-              </Box>
-              <Box sx={{height: '80px', display: 'flex', gap: 2}}>
                 <ResultItem label="Acumulado cerdo" value={batchStageInfo?.metrics?.cumulative_feed_pig} />
-                <ResultItem label="Ganancia peso" value={`${0} kg`}/>
               </Box>
-              <Box sx={{height: '80px', display: 'flex', gap: 2}}>
+              <Box sx={{height: '100px', display: 'flex', gap: 2}}>
+                <ResultItem label="Ganancia peso" value={`${0} kg`}/>
                 <ResultItem label="Peso final lote" value={`${0} kg`}/>
                 <ResultItem label="Peso final lechón" value={`${0} kg`}/>
               </Box>
-              <Box sx={{height: '80px', display: 'flex', gap: 2}}>
+              <Box sx={{height: '100px', display: 'flex', gap: 2}}>
                 <ResultItem label="cantidad de cerdos" value={`${batchStageInfo?.initial_pigs}`}/>
                 <ResultItem label="Peso inicial del lote" value={`${batchStageInfo?.initial_batch_weight}`}/>
+                <ResultItem label="Peso por lechón" value={`${batchStageInfo?.initial_pig_weight}`}/>
               </Box>
-              <Box sx={{ height: '80px', p: 2, bgcolor: 'background.neutral', borderRadius: '8px', display: 'flex', justifyContent: 'start', flexDirection: 'column'}}>
-                  <Typography variant="overline" display="block">Peso por lechón</Typography>
-                  <Typography variant="h5">{batchStageInfo?.initial_pig_weight}</Typography>
-                </Box>
               <Box sx={{height: '80px', display: 'flex', gap: 2}}>
                 <Box sx={{ p: 2, width: 1/2, height: '100%', bgcolor: 'background.neutral', borderRadius: '8px', display: 'flex', justifyContent: 'start', flexDirection: 'column'}}>
                   <Typography variant="overline" display="block">Inventario Actual</Typography>
@@ -325,12 +321,12 @@ export function BatchStageDetailsView() {
 
 function ResultItem({ label, value, trend, trendColor }: any) {
   return (
-    <Box sx={{p: 2, width: 1/2, border: '1px solid rgba(145 158 171 / 0.12)', borderRadius: '8px', display: 'flex', justifyContent: 'start', flexDirection: 'column', gap: 0.5}}>
+    <Box sx={{p: 2, width: 1/3, border: '1px solid rgba(145 158 171 / 0.12)', borderRadius: '8px', display: 'flex', justifyContent: 'start', flexDirection: 'column', gap: 0.5}}>
+      <Typography variant="caption" sx={{color: 'text.disabled', textTransform: 'uppercase', fontWeight: 'bold' }}>{label}</Typography>
       <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1}}>
-        <Typography variant="caption" sx={{ color: 'text.disabled', textTransform: 'uppercase', fontWeight: 'bold' }}>{label}</Typography>
+        <Typography variant="h5">{value}</Typography>
         {trend && <Typography variant="caption" sx={{ color: trendColor, fontWeight: 'bold' }}>{trend}</Typography>}
       </Box>
-        <Typography variant="h5">{value}</Typography>
     </Box>
   );
 }
