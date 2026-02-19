@@ -31,22 +31,7 @@ const api = axios.create({
 
 // Interceptor de respuesta para manejar errores globales
 api.interceptors.response.use(
-  (response) => {
-    // --- LOG DE DEPURACIÓN AGRESIVO ---
-    if (response.config.url?.includes('batch-stage')) {
-      console.log('--- DEBUG AXIOS RECEIVE ---');
-      console.log('URL:', response.config.url);
-      console.log('Full Body (response.data):', response.data);
-      if (response.data.data) {
-        console.log('Wrapped Data (.data.data):', response.data.data);
-        console.log('¿Metrics existe aquí?:', !!response.data.data.metrics);
-      }
-      console.log('---------------------------');
-    }
-    // ----------------------------------
-    
-    return response.data?.data !== undefined ? response.data.data : response.data;
-  },
+  (response) => response.data?.data !== undefined ? response.data.data : response.data,
   (error: AxiosError) => {
     if (error.response && error.response.status === 401) {
       console.warn('Sesión inválida o expirada.');

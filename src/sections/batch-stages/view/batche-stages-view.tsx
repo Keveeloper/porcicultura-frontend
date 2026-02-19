@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { useState, useEffect,  useCallback,  } from 'react';
+import { useState, useEffect,  useCallback, useMemo,  } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -18,6 +18,7 @@ import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 
 // import { TableNoData } from '../batch-table-no-data';
+import { CreateBatchStageModal } from '../modals';
 import { BatchStagesTableRow } from '../batch-stages-table-row'; 
 import { emptyRows, applyFilter, getComparator } from '../utils';
 import { BatchStagesTableHead } from '../batch-stages-table-head';
@@ -28,13 +29,14 @@ import { BatchStagesTableEmptyRows } from '../batch-stages-table-empty-rows';
 import type { BatchStagesResponse, BatchStagesInterface } from './types';
 
 
+
 // ----------------------------------------------------------------------
 
 export function BatcheStagesView() {
 
   const table = useTable();
 
-  const { batchId: batchId } = useParams<{ batchId: string }>();
+  const { batchId } = useParams<{ batchId: string }>();
 
   const [ openModal, setOpenModal] = useState(false);
   const [ batches, setBatches ] = useState<BatchStagesInterface[]>([]);
@@ -64,6 +66,9 @@ export function BatcheStagesView() {
   }, [batchId]);
 
   const handleOpenModal = () => setOpenModal(true);
+
+  
+
   useEffect(() => {
     getAllBatchStages();
   }, [getAllBatchStages]);
@@ -165,6 +170,12 @@ export function BatcheStagesView() {
           onRowsPerPageChange={table.onChangeRowsPerPage}
         />
       </Card>
+      <CreateBatchStageModal 
+        batchId={batchId!}
+        open={openModal} 
+        onClose={() => setOpenModal(false)} 
+        onSuccess={getAllBatchStages}
+      />
     </DashboardContent>
   );
   

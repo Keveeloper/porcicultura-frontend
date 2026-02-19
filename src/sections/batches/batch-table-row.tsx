@@ -14,7 +14,7 @@ import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 
-import { CreateBatchStageModal } from './modals/create-batch-stage-modal';
+import { CreateBatchStageModal } from '../batch-stages/modals/create-batch-stage-modal';
 
 import type { BatchInterface } from './view';
 

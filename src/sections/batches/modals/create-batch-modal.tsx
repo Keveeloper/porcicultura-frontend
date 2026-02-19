@@ -13,6 +13,8 @@ import {
 
 import api from 'src/services/axios-instance/api';
 
+import type { BatchResponse } from '../view';
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -22,7 +24,7 @@ interface Props {
 export function CreateBatchModal({ open, onClose, onSuccess }: Props) {
   const { register, handleSubmit, reset } = useForm({
     defaultValues: {
-      batch_number: 0,
+      batch_number: '',
     }
   });
 
@@ -30,11 +32,11 @@ export function CreateBatchModal({ open, onClose, onSuccess }: Props) {
     try {
       const payload = {
         ...data,
-        batch_number: Number(data.batch_number),
+        batch_number: data.batch_number,
       };
 
-      const response = await api.post('/batches', payload);
-      if (response.status === 201) {
+      const response = await api.post<BatchResponse>('/batches', payload);
+      if (response) {
         reset();
         if (onSuccess) onSuccess();
         onClose();
@@ -46,15 +48,15 @@ export function CreateBatchModal({ open, onClose, onSuccess }: Props) {
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle sx={{ fontWeight: 'bold' }}>Crear Nueva Etapa</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 'bold' }}>Creación de lote o cochera</DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent dividers>
           <Stack spacing={3}>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField 
                 fullWidth 
-                label="Número del lote" 
-                type="number" 
+                label="Código del lote" 
+                type="text" 
                 {...register('batch_number', { required: true })}
               />
             </Box>

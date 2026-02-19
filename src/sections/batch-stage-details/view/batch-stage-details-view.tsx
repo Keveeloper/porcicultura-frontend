@@ -143,9 +143,9 @@ export function BatchStageDetailsView() {
 
   return (
     <DashboardContent>
-      <Stack spacing={3} sx={{ mb: 3 }}>
-        <Card sx={{ p: 3 }}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
+      <Stack spacing={3} sx={{ mb: 2 }}>
+        <Card sx={{ p: 2 }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
             <Box>
               <Typography variant="h4">Suministro de alimentación</Typography>
               <Typography variant="body2" color="text.secondary">
@@ -154,22 +154,18 @@ export function BatchStageDetailsView() {
             </Box>
             
             {/* Botón superior dinámico */}
-            {/* {canFinishStage ? ( */}
-              <Button 
-                variant="contained" 
-                color="success" 
-                onClick={handleFinishStage}
-                startIcon={<Iconify icon="eva:checkmark-fill" />}
-                disabled={!canFinishStage}
-              >
-                Finalizar Etapa
-              </Button>
-            {/* // ) : isCompleted && ( */}
-            {/* //   <Chip label="Etapa Finalizada" color="success" icon={<Iconify icon="eva:checkmark-fill" />} /> */}
-            {/* // )} */}
+            <Button 
+              variant="contained" 
+              color="success" 
+              onClick={handleFinishStage}
+              startIcon={<Iconify icon="eva:checkmark-fill" />}
+              disabled={!canFinishStage}
+            >
+              Finalizar Etapa
+            </Button>
           </Stack>
 
-          <Typography variant="subtitle2" sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
             Progreso Ciclo: {isCompleted ? '100%' : `Semana ${currentWeek + 1} de ${batchStageInfo?.number_of_weeks}`}
           </Typography>
           
@@ -187,7 +183,7 @@ export function BatchStageDetailsView() {
         <Box sx={{ flex: { md: '0 0 66.666%' }, width: '100%' }}>
           <Stack spacing={3}>
             <Card>
-              <Tabs value={currentWeek} onChange={handleTabChange} variant="scrollable" sx={{ px: 2, pt: 2, borderBottom: 1, borderColor: 'divider' }}>
+              <Tabs value={currentWeek} onChange={handleTabChange} variant="scrollable" sx={{ px: 0.5, pt: 2, borderBottom: 1, borderColor: 'divider' }}>
                 {[...Array(batchStageInfo?.number_of_weeks || 7)].map((_, i) => (
                   <Tab key={i} label={`Semana ${i + 1}`} />
                 ))}
@@ -196,19 +192,28 @@ export function BatchStageDetailsView() {
               <TableContainer>
                 <Table>
                   <TableHead>
-                    <TableRow>
+                    <TableRow sx={{
+                      height: '10px', // Set the desired height
+                      '& .MuiTableCell-root': {
+                        padding: '12px 20px', // Adjust padding to fit the new height
+                      },
+                    }}>
                       <TableCell>Fecha</TableCell>
                       <TableCell>Día</TableCell>
                       <TableCell align="center">Alimento (kg)</TableCell>
                       <TableCell align="center">Muertes</TableCell>
-                      <TableCell align="right">Saldo Cerdos</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {weekDays.map((day) => {
                       const rowData = formData[day.dateStr] || { feed_kg: 0, mortality: 0 };
                       return (
-                        <TableRow key={day.dateStr} hover>
+                        <TableRow key={day.dateStr} hover sx={{
+                          height: '10px', // Set the desired height
+                          '& .MuiTableCell-root': {
+                            padding: '12px 20px', // Adjust padding to fit the new height
+                          },
+                        }}>
                           <TableCell sx={{ color: 'text.secondary' }}>{day.displayDate}</TableCell>
                           <TableCell sx={{ fontWeight: '600' }}>{day.dayLabel}</TableCell>
                           <TableCell align="center">
@@ -232,9 +237,6 @@ export function BatchStageDetailsView() {
                               sx={{ width: 70 }} 
                               slotProps={{ htmlInput: { style: { textAlign: 'center' } } }}
                             />
-                          </TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                            {Number(batchStageInfo?.initial_pigs || 0) - (rowData.mortality || 0)}
                           </TableCell>
                         </TableRow>
                       );

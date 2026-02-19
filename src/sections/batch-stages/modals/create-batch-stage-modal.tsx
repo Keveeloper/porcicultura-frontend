@@ -1,11 +1,20 @@
 import { useForm } from 'react-hook-form';
 
 import { 
-  Dialog, DialogTitle, DialogContent, DialogActions, 
-  Button, TextField, MenuItem, Box, Stack 
+  Box, 
+  Stack,
+  Dialog, 
+  Button, 
+  MenuItem, 
+  TextField, 
+  DialogTitle, 
+  DialogContent, 
+  DialogActions, 
 } from '@mui/material';
 
 import api from 'src/services/axios-instance/api';
+
+import type { BatchStageResponse } from './types';
 
 interface Props {
   batchId: string;
@@ -15,17 +24,30 @@ interface Props {
 }
 
 export function CreateBatchStageModal({ batchId, open, onClose, onSuccess }: Props) {
-  const { register, handleSubmit, reset } = useForm({
+    
+  const { 
+    register, 
+    handleSubmit, 
+    reset, 
+    watch,
+    formState: { errors }, 
+  } = useForm({
     defaultValues: {
       batchId,
-      stage_type: 'growing',
+      stage_type: '',
       start_date: new Date().toISOString().split('T')[0],
-      number_of_weeks: 1,
-      initial_pigs: 0,
-      initial_batch_weight: 0,
-      initial_pig_weight: 0,
+      number_of_weeks: 7,
+      initial_pigs: null,
+      initial_batch_weight: null,
+      initial_pig_weight: null,
     }
   });
+
+  const watchInitialPigs = watch('initial_pigs');
+  const watchInitialBatchWeight = watch('initial_batch_weight');
+  const calculatedInitialPigWeight = (watchInitialPigs && watchInitialBatchWeight && watchInitialPigs > 0 && watchInitialBatchWeight > 0) 
+    ? (watchInitialBatchWeight / watchInitialPigs).toFixed(2)
+    : 0;
 
   const onSubmit = async (data: any) => {
     try {
@@ -35,13 +57,15 @@ export function CreateBatchStageModal({ batchId, open, onClose, onSuccess }: Pro
         number_of_weeks: Number(data.number_of_weeks),
         initial_pigs: Number(data.initial_pigs),
         initial_batch_weight: Number(data.initial_batch_weight),
-        initial_pig_weight: Number(data.initial_pig_weight),
+        initial_pig_weight: Number(calculatedInitialPigWeight),
       };
 
-      await api.post('/batch-stages', payload);
-      reset();
-      if (onSuccess) onSuccess();
-      onClose();
+      const response = await api.post<BatchStageResponse>('/batch-stages', payload);
+      if (response) {
+        reset();
+        if (onSuccess) onSuccess();
+        onClose();
+      }
     } catch (error) {
       console.error('Error al crear la etapa:', error);
     }
@@ -58,8 +82,10 @@ export function CreateBatchStageModal({ batchId, open, onClose, onSuccess }: Pro
             <TextField
               select
               fullWidth
-              label="Tipo de Etapa"
-              {...register('stage_type', { required: true })}
+              label="Etapa"
+              {...register('stage_type', { required: 'La etapa es obligatoria' })}
+              error={!!errors.stage_type}
+              helperText={errors.stage_type?.message}
             >
               <MenuItem value="pre-nursery">Precebo</MenuItem>
               <MenuItem value="growing">Levante</MenuItem>
@@ -72,13 +98,17 @@ export function CreateBatchStageModal({ batchId, open, onClose, onSuccess }: Pro
                 label="Fecha de Inicio" 
                 type="date" 
                 InputLabelProps={{ shrink: true }}
-                {...register('start_date', { required: true })}
+                {...register('start_date', { required: 'Elija una fecha de inicio' })}
+                error={!!errors.start_date}
+                helperText={errors.start_date?.message}
               />
               <TextField 
                 fullWidth 
                 label="Semanas" 
                 type="number" 
-                {...register('number_of_weeks', { required: true })}
+                {...register('number_of_weeks', { required: 'Las semanas son obligatorias' })}
+                error={!!errors.number_of_weeks}
+                helperText={errors.number_of_weeks?.message}
               />
             </Box>
 
@@ -86,7 +116,9 @@ export function CreateBatchStageModal({ batchId, open, onClose, onSuccess }: Pro
               fullWidth 
               label="Cerdos Iniciales" 
               type="number" 
-              {...register('initial_pigs', { required: true })}
+              {...register('initial_pigs', { required: 'El número cerdos iniciales son obligatorios' })}
+              error={!!errors.initial_pigs}
+              helperText={errors.initial_pigs?.message}
             />
 
             <Box sx={{ display: 'flex', gap: 2 }}>
@@ -95,14 +127,18 @@ export function CreateBatchStageModal({ batchId, open, onClose, onSuccess }: Pro
                 label="Peso Lote (kg)" 
                 type="number" 
                 inputProps={{ step: "0.01" }}
-                {...register('initial_batch_weight', { required: true })}
+                {...register('initial_batch_weight', { required: 'El peso inicial del lote es obligatorio' })}
+                error={!!errors.initial_batch_weight}
+                helperText={errors.initial_batch_weight?.message}
               />
               <TextField 
                 fullWidth 
                 label="Peso Cerdo (kg)" 
                 type="number" 
-                inputProps={{ step: "0.01" }}
-                {...register('initial_pig_weight', { required: true })}
+                value={calculatedInitialPigWeight}
+                inputProps={{ step: "0.01", readOnly: true }}
+                variant='filled'
+                // {...register('initial_pig_weight', { required: true })}
               />
             </Box>
 
