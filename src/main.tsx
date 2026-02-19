@@ -1,4 +1,5 @@
 import { StrictMode } from 'react';
+import { sileo, Toaster } from "sileo";
 import { createRoot } from 'react-dom/client';
 import { Outlet, RouterProvider, createBrowserRouter } from 'react-router-dom';
 
@@ -11,9 +12,12 @@ import { ErrorBoundary } from './routes/components';
 const router = createBrowserRouter([
   {
     Component: () => (
-      <App>
-        <Outlet />
-      </App>
+      <>
+        <Toaster position="bottom-right" />
+        <App>
+          <Outlet />
+        </App>
+      </>
     ),
     errorElement: <ErrorBoundary />,
     children: routesSection,

@@ -1,3 +1,4 @@
+import { sileo } from "sileo";
 import { useParams } from 'react-router-dom';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 
@@ -26,6 +27,7 @@ import { DashboardContent } from 'src/layouts/dashboard';
 import { Iconify } from 'src/components/iconify';
 
 import type { BatchStageResponse } from './types';
+
 
 // Helper para nombres de días
 const DAYS_NAME = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -122,9 +124,23 @@ export function BatchStageDetailsView() {
 
     try {
       const response = await api.post<BatchStageResponse>(`/daily-meals/batch/${batchId}/batch-stage/${batchStageId}`, recordsToSave);
-      alert('Cambios guardados exitosamente');
-      // setBatchStageInfo(response);
-      getOneBatchStage();
+      console.log('Response: ', response);
+      
+      if (response) {
+        getOneBatchStage();
+        sileo.success({
+          styles: {
+            title: "text-white!",
+          },
+          title: "Cambios guardados",
+          fill: "black",
+          description: (
+            <span style={{color: "white"}}>
+              Se han guardado los datos de la semana correctamente.
+            </span>
+          ),
+        });
+      }
     } catch (error) {
       console.error('Error al guardar:', error);
     }
@@ -149,10 +165,9 @@ export function BatchStageDetailsView() {
             <Box>
               <Typography variant="h4">Suministro de alimentación</Typography>
               <Typography variant="body2" color="text.secondary">
-                Lote #{batchStageInfo?.batch?.batch_number} • {batchStageInfo?.stage_type?.toUpperCase()}
+                {batchStageInfo?.batch?.batch_number} • {batchStageInfo?.stage_type?.toUpperCase()}
               </Typography>
-            </Box>
-            
+            </Box>            
             {/* Botón superior dinámico */}
             <Button 
               variant="contained" 
@@ -195,7 +210,7 @@ export function BatchStageDetailsView() {
                     <TableRow sx={{
                       height: '10px', // Set the desired height
                       '& .MuiTableCell-root': {
-                        padding: '12px 20px', // Adjust padding to fit the new height
+                        padding: '14px 20px', // Adjust padding to fit the new height
                       },
                     }}>
                       <TableCell>Fecha</TableCell>
@@ -268,17 +283,37 @@ export function BatchStageDetailsView() {
             <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
               <Iconify icon="eva:checkmark-fill" width={24} /> Resultados de Etapa
             </Typography>
-            <Divider sx={{ mb: 3 }} />
-            <Stack spacing={3}>
-              <ResultItem label="Consumo Acumulado" value={`${batchStageInfo?.metrics?.cumulative_feed} kg`} />
-              <ResultItem label="Mortalidad Total" value={batchStageInfo?.metrics?.cumulative_mortality} trend={`${batchStageInfo?.metrics?.mortality_percentage}%`} trendColor="error.main" />
-              <Box sx={{ p: 2, bgcolor: isCompleted ? 'success.lighter' : 'primary.lighter', borderRadius: 1.5, border: '1px dashed', borderColor: isCompleted ? 'success.main' : 'primary.main' }}>
-                <Typography variant="overline" display="block">FCR (Conversión)</Typography>
-                <Typography variant="h4">{batchStageInfo?.metrics?.fcr}</Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Stack spacing={2}>
+              <Box sx={{height: '80px', display: 'flex', gap: 2}}>
+                <ResultItem label="Consumo Acumulado" value={`${batchStageInfo?.metrics?.cumulative_feed} kg`}/>
+                <ResultItem label="Mortalidad Total" value={batchStageInfo?.metrics?.cumulative_mortality} trend={`${batchStageInfo?.metrics?.mortality_percentage}%`} trendColor="error.main" />
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'background.neutral', borderRadius: 1.5 }}>
-                <Typography variant="overline" display="block">Inventario Actual</Typography>
-                <Typography variant="h4">{batchStageInfo?.metrics?.current_pig_balance} Cerdos</Typography>
+              <Box sx={{height: '80px', display: 'flex', gap: 2}}>
+                <ResultItem label="Acumulado cerdo" value={batchStageInfo?.metrics?.cumulative_feed_pig} />
+                <ResultItem label="Ganancia peso" value={`${0} kg`}/>
+              </Box>
+              <Box sx={{height: '80px', display: 'flex', gap: 2}}>
+                <ResultItem label="Peso final lote" value={`${0} kg`}/>
+                <ResultItem label="Peso final lechón" value={`${0} kg`}/>
+              </Box>
+              <Box sx={{height: '80px', display: 'flex', gap: 2}}>
+                <ResultItem label="cantidad de cerdos" value={`${batchStageInfo?.initial_pigs}`}/>
+                <ResultItem label="Peso inicial del lote" value={`${batchStageInfo?.initial_batch_weight}`}/>
+              </Box>
+              <Box sx={{ height: '80px', p: 2, bgcolor: 'background.neutral', borderRadius: '8px', display: 'flex', justifyContent: 'start', flexDirection: 'column'}}>
+                  <Typography variant="overline" display="block">Peso por lechón</Typography>
+                  <Typography variant="h5">{batchStageInfo?.initial_pig_weight}</Typography>
+                </Box>
+              <Box sx={{height: '80px', display: 'flex', gap: 2}}>
+                <Box sx={{ p: 2, width: 1/2, height: '100%', bgcolor: 'background.neutral', borderRadius: '8px', display: 'flex', justifyContent: 'start', flexDirection: 'column'}}>
+                  <Typography variant="overline" display="block">Inventario Actual</Typography>
+                  <Typography variant="h4">{batchStageInfo?.metrics?.current_pig_balance} Cerdos</Typography>
+                </Box>
+                <Box sx={{width: 1/2, p: 2, bgcolor: isCompleted ? 'success.lighter' : 'primary.lighter', borderRadius: 1.5, border: '1px dashed', borderColor: isCompleted ? 'success.main' : 'primary.main' }}>
+                  <Typography variant="overline" display="block">FCR (Conversión)</Typography>
+                  <Typography variant="h4">{batchStageInfo?.metrics?.fcr}</Typography>
+                </Box>
               </Box>
             </Stack>
           </Card>
@@ -290,10 +325,12 @@ export function BatchStageDetailsView() {
 
 function ResultItem({ label, value, trend, trendColor }: any) {
   return (
-    <Box>
-      <Typography variant="caption" sx={{ color: 'text.disabled', textTransform: 'uppercase', fontWeight: 'bold' }}>{label}</Typography>
-      <Typography variant="h5">{value}</Typography>
-      {trend && <Typography variant="caption" sx={{ color: trendColor, fontWeight: 'bold' }}>{trend}</Typography>}
+    <Box sx={{p: 2, width: 1/2, border: '1px solid rgba(145 158 171 / 0.12)', borderRadius: '8px', display: 'flex', justifyContent: 'start', flexDirection: 'column', gap: 0.5}}>
+      <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1}}>
+        <Typography variant="caption" sx={{ color: 'text.disabled', textTransform: 'uppercase', fontWeight: 'bold' }}>{label}</Typography>
+        {trend && <Typography variant="caption" sx={{ color: trendColor, fontWeight: 'bold' }}>{trend}</Typography>}
+      </Box>
+        <Typography variant="h5">{value}</Typography>
     </Box>
   );
 }
