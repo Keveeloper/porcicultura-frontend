@@ -59,7 +59,8 @@ export function CreateBatchStageModal({ batchId, open, onClose, onSuccess }: Pro
         initial_batch_weight: Number(data.initial_batch_weight),
         initial_pig_weight: Number(calculatedInitialPigWeight),
       };
-
+      console.log('Payload: ', payload);
+      
       const response = await api.post<BatchStageResponse>('/batch-stages', payload);
       if (response) {
         reset();
