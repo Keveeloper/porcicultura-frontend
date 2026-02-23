@@ -26,14 +26,16 @@ import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Iconify } from 'src/components/iconify';
 
-import type { BatchStageResponse } from './types';
+import { CreateBatchStageDetailsModal } from "../modal/create-batch-stage-details-modal";
 
+import type { BatchStageResponse } from './types';
 
 // Helper para nombres de días
 const DAYS_NAME = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 export function BatchStageDetailsView() {
   const { batchId, batchStageId } = useParams();
+  const [ openModal, setOpenModal] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(0);
   const [batchStageInfo, setBatchStageInfo] = useState<any>();
   const [formData, setFormData] = useState<Record<string, { feed_kg: number; mortality: number }>>({});
@@ -146,16 +148,18 @@ export function BatchStageDetailsView() {
     }
   };
 
-  const handleFinishStage = async () => {
-    try {
-      // Endpoint que deberás crear en NestJS para cambiar status a 'completed'
-      // await api.patch(`/batch-stages/${batchStageId}/status`, { status: 'completed' });
-      alert('Etapa finalizada exitosamente. Los datos ahora son de solo lectura.');
-      getOneBatchStage();
-    } catch (error) {
-      console.error('Error al finalizar etapa:', error);
-    }
-  };
+  // const handleFinishStage = async () => {
+  //   try {
+  //     // Endpoint que deberás crear en NestJS para cambiar status a 'completed'
+  //     // await api.patch(`/batch-stages/${batchStageId}/status`, { status: 'completed' });
+  //     alert('Etapa finalizada exitosamente. Los datos ahora son de solo lectura.');
+  //     getOneBatchStage();
+  //   } catch (error) {
+  //     console.error('Error al finalizar etapa:', error);
+  //   }
+  // };
+
+  const handleOpenModal = () => setOpenModal(true);
 
   return (
     <DashboardContent>
@@ -172,7 +176,7 @@ export function BatchStageDetailsView() {
             <Button 
               variant="contained" 
               color="success" 
-              onClick={handleFinishStage}
+              onClick={handleOpenModal}
               startIcon={<Iconify icon="eva:checkmark-fill" />}
               disabled={!canFinishStage}
             >
@@ -315,6 +319,11 @@ export function BatchStageDetailsView() {
           </Card>
         </Box>
       </Box>
+      <CreateBatchStageDetailsModal 
+        batchId={batchId || ''}
+        open={openModal} 
+        onClose={() => setOpenModal(false)} 
+      />
     </DashboardContent>
   );
 }
