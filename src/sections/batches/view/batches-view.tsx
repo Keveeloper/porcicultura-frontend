@@ -15,13 +15,13 @@ import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
+import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
-// import { TableNoData } from '../batch-table-no-data';
-import { BatchTableRow } from '../batch-table-row'; 
+import { BatchTableRow } from '../batch-table-row';
 import { BatchTableHead } from '../batch-table-head';
 import { BatchTableNoData } from '../batch-table-no-data';
 import { BatchTableToolbar } from '../batch-table-toolbar';
-import { BatchTableEmptyRows } from '../batch-table-empty-rows'; 
+import { BatchTableEmptyRows } from '../batch-table-empty-rows';
 import { CreateBatchModal } from '../modals/create-batch-modal';
 import { emptyRows, applyFilter, getComparator } from '../utils';
 
@@ -33,9 +33,9 @@ export function BatchesView() {
 
   const table = useTable();
 
-  const [ openModal, setOpenModal] = useState(false);
-  const [ batches, setBatches ] = useState<BatchInterface[]>([]);
-  const [ filterName, setFilterName] = useState('');
+  const [openModal, setOpenModal] = useState(false);
+  const [batches, setBatches] = useState<BatchInterface[]>([]);
+  const [filterName, setFilterName] = useState('');
 
   const dataFiltered: BatchInterface[] = applyFilter({
     inputData: batches,
@@ -52,7 +52,7 @@ export function BatchesView() {
       const response = await api.get<BatchResponse>('/batches');
       const batchData = response;
       console.log('batchData: ', batchData);
-      
+
       setBatches(batchData);
     } catch (e) {
       console.error('Error al obtener los lotes:', e);
@@ -64,27 +64,22 @@ export function BatchesView() {
     getAllBatches();
   }, [getAllBatches]);
 
-   return (
+  return (
     <DashboardContent>
-      <Box
-        sx={{
-          mb: 5,
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        <Typography variant="h4" sx={{ flexGrow: 1 }}>
-          Lotes
-        </Typography>
-        <Button
-          variant="contained"
-          color="inherit"
-          startIcon={<Iconify icon="mingcute:add-line" />}
-          onClick={handleOpenModal}
-        >
-          Nuevo
-        </Button>
-      </Box>
+      <CustomBreadcrumbs
+        heading="Lotes"
+        links={[{ name: 'Lotes' }]}
+        action={
+          <Button
+            variant="contained"
+            color="inherit"
+            startIcon={<Iconify icon="mingcute:add-line" />}
+            onClick={handleOpenModal}
+          >
+            Nuevo
+          </Button>
+        }
+      />
 
       <Card>
         <BatchTableToolbar
@@ -154,14 +149,14 @@ export function BatchesView() {
           onRowsPerPageChange={table.onChangeRowsPerPage}
         />
       </Card>
-      <CreateBatchModal 
-        open={openModal} 
-        onClose={() => setOpenModal(false)} 
+      <CreateBatchModal
+        open={openModal}
+        onClose={() => setOpenModal(false)}
         onSuccess={getAllBatches}
       />
     </DashboardContent>
   );
-  
+
 }
 
 // ----------------------------------------------------------------------

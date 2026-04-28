@@ -58,10 +58,16 @@ export function BatchTableRow({ row, selected, onSelectRow }: UserTableRowProps)
 
         <TableCell component="th" scope="row">
           <Box
+            onClick={handleViewBatch}
             sx={{
               gap: 2,
               display: 'flex',
               alignItems: 'center',
+              color: '#1877F2',
+              cursor: 'pointer',
+              '&:hover': {
+                textDecoration: 'underline',
+              },
             }}
           >
             {row.batch_number}

@@ -18,12 +18,13 @@ import api from 'src/services/axios-instance/api';
 
 interface Props {
   batchId: string;
+  batchStageId: string;
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
-export function CreateBatchStageDetailsModal({ batchId, open, onClose, onSuccess }: Props) {
+export function CreateBatchStageDetailsModal({ batchId, batchStageId, open, onClose, onSuccess }: Props) {
     
   const { 
     register, 
@@ -45,12 +46,12 @@ export function CreateBatchStageDetailsModal({ batchId, open, onClose, onSuccess
       };
       console.log('Payload: ', payload);
       
-    //   const response = await api.post<BatchStageResponse>('/batch-stages', payload);
-    //   if (response) {
-    //     reset();
-    //     if (onSuccess) onSuccess();
-    //     onClose();
-    //   }
+      const response = await api.patch<any>(`batch-stages/batch/${batchId}/batch-stage/${batchStageId}/finish-stage`, payload);
+      if (response) {
+        reset();
+        if (onSuccess) onSuccess();
+        onClose();
+      }
     } catch (error) {
       console.error('Error al crear la etapa:', error);
     }

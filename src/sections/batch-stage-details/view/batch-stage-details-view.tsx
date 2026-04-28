@@ -25,6 +25,7 @@ import api from 'src/services/axios-instance/api';
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Iconify } from 'src/components/iconify';
+import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
 import { CreateBatchStageDetailsModal } from "../modal/create-batch-stage-details-modal";
 
@@ -163,6 +164,13 @@ export function BatchStageDetailsView() {
 
   return (
     <DashboardContent>
+      <CustomBreadcrumbs
+        links={[
+          { name: 'Lotes', href: '/batches' },
+          { name: 'Etapas', href: `/batches/${batchId}/batch-stages` },
+          { name: 'Detalles' },
+        ]}
+      />
       <Stack spacing={3} sx={{ mb: 2 }}>
         <Card sx={{ p: 2 }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
@@ -293,12 +301,12 @@ export function BatchStageDetailsView() {
               <Box sx={{height: '100px', display: 'flex', gap: 2}}>
                 <ResultItem label="Consumo Acumulado" value={`${batchStageInfo?.metrics?.cumulative_feed} kg`}/>
                 <ResultItem label="Mortalidad Total" value={batchStageInfo?.metrics?.cumulative_mortality} trend={`${batchStageInfo?.metrics?.mortality_percentage}%`} trendColor="error.main" />
-                <ResultItem label="Acumulado cerdo" value={batchStageInfo?.metrics?.cumulative_feed_pig} />
+                <ResultItem label="Consumo acumulado cerdo" value={batchStageInfo?.metrics?.cumulative_feed_pig} />
               </Box>
               <Box sx={{height: '100px', display: 'flex', gap: 2}}>
-                <ResultItem label="Ganancia peso" value={`${0} kg`}/>
-                <ResultItem label="Peso final lote" value={`${0} kg`}/>
-                <ResultItem label="Peso final lechón" value={`${0} kg`}/>
+                <ResultItem label="Ganancia peso" value={`${batchStageInfo?.metrics?.weight_gain} kg`}/>
+                <ResultItem label="Peso final lote" value={`${batchStageInfo?.final_batch_weight} kg`}/>
+                <ResultItem label="Peso final lechón" value={`${batchStageInfo?.metrics?.final_pig_weight} kg`}/>
               </Box>
               <Box sx={{height: '100px', display: 'flex', gap: 2}}>
                 <ResultItem label="cantidad de cerdos" value={`${batchStageInfo?.initial_pigs}`}/>
@@ -306,14 +314,18 @@ export function BatchStageDetailsView() {
                 <ResultItem label="Peso por lechón" value={`${batchStageInfo?.initial_pig_weight}`}/>
               </Box>
               <Box sx={{height: '80px', display: 'flex', gap: 2}}>
-                <Box sx={{ p: 2, width: 1/2, height: '100%', bgcolor: 'background.neutral', borderRadius: '8px', display: 'flex', justifyContent: 'start', flexDirection: 'column'}}>
+                <Box sx={{ p: 2, width: 1/3, height: '100%', bgcolor: 'background.neutral', borderRadius: '8px', display: 'flex', justifyContent: 'start', flexDirection: 'column'}}>
                   <Typography variant="overline" display="block">Inventario Actual</Typography>
-                  <Typography variant="h4">{batchStageInfo?.metrics?.current_pig_balance} Cerdos</Typography>
+                  <Typography variant="h4">{batchStageInfo?.metrics?.current_pig_balance}</Typography>
                 </Box>
-                <Box sx={{width: 1/2, p: 2, bgcolor: isCompleted ? 'success.lighter' : 'primary.lighter', borderRadius: 1.5, border: '1px dashed', borderColor: isCompleted ? 'success.main' : 'primary.main' }}>
+                <Box sx={{width: 1/3, p: 2, bgcolor: isCompleted ? 'success.lighter' : 'primary.lighter', borderRadius: 1.5, border: '1px dashed', borderColor: isCompleted ? 'success.main' : 'primary.main' }}>
                   <Typography variant="overline" display="block">FCR (Conversión)</Typography>
                   <Typography variant="h4">{batchStageInfo?.metrics?.fcr}</Typography>
                 </Box>
+                <ResultItem label="Ganancia diaria cerdo" value={`${batchStageInfo?.metrics?.daily_pig_gain}`}/>
+              </Box>
+              <Box sx={{height: '80px', display: 'flex', gap: 2}}>
+                <ResultItem label="Consumo diario por cerdo" value={`${batchStageInfo?.metrics?.daily_feed_pig} kg`}/>
               </Box>
             </Stack>
           </Card>
@@ -321,8 +333,10 @@ export function BatchStageDetailsView() {
       </Box>
       <CreateBatchStageDetailsModal 
         batchId={batchId || ''}
+        batchStageId={batchStageId || ''}
         open={openModal} 
         onClose={() => setOpenModal(false)} 
+        onSuccess={getOneBatchStage}
       />
     </DashboardContent>
   );
@@ -334,7 +348,7 @@ function ResultItem({ label, value, trend, trendColor }: any) {
       <Typography variant="caption" sx={{color: 'text.disabled', textTransform: 'uppercase', fontWeight: 'bold' }}>{label}</Typography>
       <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1}}>
         <Typography variant="h5">{value}</Typography>
-        {trend && <Typography variant="caption" sx={{ color: trendColor, fontWeight: 'bold' }}>{trend}</Typography>}
+        {trend && <Typography sx={{ color: trendColor, fontWeight: 'bold' }}>{trend}</Typography>}
       </Box>
     </Box>
   );

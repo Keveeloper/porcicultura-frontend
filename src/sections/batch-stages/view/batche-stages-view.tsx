@@ -1,12 +1,11 @@
 import { useParams } from 'react-router-dom';
-import { useState, useEffect,  useCallback, useMemo,  } from 'react';
+import { useState, useEffect, useCallback, useMemo, } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
 import Button from '@mui/material/Button';
 import TableBody from '@mui/material/TableBody';
-import Typography from '@mui/material/Typography';
 import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
 
@@ -16,15 +15,15 @@ import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
+import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
-// import { TableNoData } from '../batch-table-no-data';
 import { CreateBatchStageModal } from '../modals';
-import { BatchStagesTableRow } from '../batch-stages-table-row'; 
+import { BatchStagesTableRow } from '../batch-stages-table-row';
 import { emptyRows, applyFilter, getComparator } from '../utils';
 import { BatchStagesTableHead } from '../batch-stages-table-head';
 import { BatchStagesTableNoData } from '../batch-stages-table-no-data';
 import { BatchStagesTableToolbar } from '../batch-stages-table-toolbar';
-import { BatchStagesTableEmptyRows } from '../batch-stages-table-empty-rows'; 
+import { BatchStagesTableEmptyRows } from '../batch-stages-table-empty-rows';
 
 import type { BatchStagesResponse, BatchStagesInterface } from './types';
 
@@ -38,9 +37,9 @@ export function BatcheStagesView() {
 
   const { batchId } = useParams<{ batchId: string }>();
 
-  const [ openModal, setOpenModal] = useState(false);
-  const [ batches, setBatches ] = useState<BatchStagesInterface[]>([]);
-  const [ filterName, setFilterName] = useState('');
+  const [openModal, setOpenModal] = useState(false);
+  const [batches, setBatches] = useState<BatchStagesInterface[]>([]);
+  const [filterName, setFilterName] = useState('');
 
   const dataFiltered: BatchStagesInterface[] = applyFilter({
     inputData: batches,
@@ -58,7 +57,7 @@ export function BatcheStagesView() {
       const response = await api.get<BatchStagesResponse>(`/batch-stages/batch/${batchId}`);
       const batchData = response;
       console.log('batchData: ', batchData);
-      
+
       setBatches(batchData);
     } catch (e) {
       console.error('Error al obtener los lotes:', e);
@@ -67,33 +66,31 @@ export function BatcheStagesView() {
 
   const handleOpenModal = () => setOpenModal(true);
 
-  
+
 
   useEffect(() => {
     getAllBatchStages();
   }, [getAllBatchStages]);
 
-   return (
+  return (
     <DashboardContent>
-      <Box
-        sx={{
-          mb: 5,
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        <Typography variant="h4" sx={{ flexGrow: 1 }}>
-          Estapas de lotes
-        </Typography>
-        <Button
-          variant="contained"
-          color="inherit"
-          startIcon={<Iconify icon="mingcute:add-line" />}
-          onClick={handleOpenModal}
-        >
-          Nuevo
-        </Button>
-      </Box>
+      <CustomBreadcrumbs
+        heading="Etapas de lotes"
+        links={[
+          { name: 'Lotes', href: '/batches' },
+          { name: 'Etapas' },
+        ]}
+        action={
+          <Button
+            variant="contained"
+            color="inherit"
+            startIcon={<Iconify icon="mingcute:add-line" />}
+            onClick={handleOpenModal}
+          >
+            Nuevo
+          </Button>
+        }
+      />
 
       <Card>
         <BatchStagesTableToolbar
@@ -170,15 +167,15 @@ export function BatcheStagesView() {
           onRowsPerPageChange={table.onChangeRowsPerPage}
         />
       </Card>
-      <CreateBatchStageModal 
+      <CreateBatchStageModal
         batchId={batchId!}
-        open={openModal} 
-        onClose={() => setOpenModal(false)} 
+        open={openModal}
+        onClose={() => setOpenModal(false)}
         onSuccess={getAllBatchStages}
       />
     </DashboardContent>
   );
-  
+
 }
 
 // ----------------------------------------------------------------------

@@ -57,17 +57,23 @@ export function BatchStagesTableRow({ row, selected, onSelectRow }: UserTableRow
 
         <TableCell component="th" scope="row">
           <Box
+            onClick={handleViewBatchStages}
             sx={{
               gap: 2,
               display: 'flex',
               alignItems: 'center',
+              color: '#1877F2',
+              cursor: 'pointer',
+              '&:hover': {
+                textDecoration: 'underline',
+              },
             }}
           >
             {row.initial_pigs}
           </Box>
         </TableCell>
-        <TableCell><Label color={(row.stage_type === 'pre-nursery' ? 'primary' : row.stage_type === 'growing' ? 'secondary' : 'info') }>{row.stage_type}</Label></TableCell>
-        <TableCell><Label color={(row.status === 'pending' ? 'warning' : row.status === 'in_progress' ? 'primary' : 'success') }>{row.status}</Label></TableCell>
+        <TableCell><Label color={(row.stage_type === 'pre-nursery' ? 'primary' : row.stage_type === 'growing' ? 'secondary' : 'info')}>{row.stage_type}</Label></TableCell>
+        <TableCell><Label color={(row.status === 'pending' ? 'warning' : row.status === 'in_progress' ? 'primary' : 'success')}>{row.status}</Label></TableCell>
         <TableCell align="right">
           <IconButton onClick={handleOpenPopover}>
             <Iconify icon="eva:more-vertical-fill" />
@@ -98,18 +104,22 @@ export function BatchStagesTableRow({ row, selected, onSelectRow }: UserTableRow
             },
           }}
         >
-          <MenuItem onClick={handleOpenModal} sx={{'&:hover': {
-            color: '#1877F2',
-            cursor: 'pointer',
-          },}}>
+          <MenuItem onClick={handleOpenModal} sx={{
+            '&:hover': {
+              color: '#1877F2',
+              cursor: 'pointer',
+            },
+          }}>
             <Iconify icon="mingcute:add-line" />
             Crear etapa
           </MenuItem>
 
-          <MenuItem onClick={handleViewBatchStages} sx={{'&:hover': {
-            color: '#1877F2',
-            cursor: 'pointer',
-          },}}>
+          <MenuItem onClick={handleViewBatchStages} sx={{
+            '&:hover': {
+              color: '#1877F2',
+              cursor: 'pointer',
+            },
+          }}>
             <Iconify icon="solar:eye-bold" />
             Ver
           </MenuItem>
