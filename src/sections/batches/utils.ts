@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------
 
-import { BatchInterface } from "./view";
+import type { BatchInterface } from "./view";
 
 export const visuallyHidden = {
   border: 0,

@@ -1,5 +1,5 @@
 import { sileo } from "sileo";
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import { 
@@ -16,9 +16,8 @@ import {
   TableCell, 
   TableHead, 
   TextField, 
-  Typography, 
-  TableContainer,
-  Chip, 
+  Typography,
+  TableContainer, 
 } from '@mui/material';
 
 import api from 'src/services/axios-instance/api';
@@ -36,6 +35,7 @@ const DAYS_NAME = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Vierne
 
 export function BatchStageDetailsView() {
   const { batchId, batchStageId } = useParams();
+  const navigate = useNavigate();
   const [ openModal, setOpenModal] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(0);
   const [batchStageInfo, setBatchStageInfo] = useState<any>();
@@ -162,6 +162,10 @@ export function BatchStageDetailsView() {
 
   const handleOpenModal = () => setOpenModal(true);
 
+  const handleViewReport = () => {
+    navigate(`/batches/${batchId}/batch-stages/${batchStageId}/report`);
+  };
+
   return (
     <DashboardContent>
       <CustomBreadcrumbs
@@ -180,16 +184,26 @@ export function BatchStageDetailsView() {
                 {batchStageInfo?.batch?.batch_number} • {batchStageInfo?.stage_type?.toUpperCase()}
               </Typography>
             </Box>            
-            {/* Botón superior dinámico */}
-            <Button 
-              variant="contained" 
-              color="success" 
-              onClick={handleOpenModal}
-              startIcon={<Iconify icon="eva:checkmark-fill" />}
-              disabled={!canFinishStage}
-            >
-              Finalizar Etapa
-            </Button>
+            {/* Botones de acción */}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button 
+                variant="outlined" 
+                color="info" 
+                onClick={handleViewReport}
+                startIcon={<Iconify icon="solar:document-text-bold" />}
+              >
+                Ver Informe
+              </Button>
+              <Button 
+                variant="contained" 
+                color="success" 
+                onClick={handleOpenModal}
+                startIcon={<Iconify icon="eva:checkmark-fill" />}
+                disabled={!canFinishStage}
+              >
+                Finalizar Etapa
+              </Button>
+            </Box>
           </Stack>
 
           <Typography variant="subtitle2" sx={{ mb: 1 }}>

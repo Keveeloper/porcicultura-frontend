@@ -1,16 +1,12 @@
+import { useCallback } from 'react';
 import { FirebaseError } from 'firebase/app';
-import { useState, useCallback } from 'react';
 import axios, { type AxiosError } from 'axios';
 import { signInWithPopup } from 'firebase/auth';
 
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Button from '@mui/material/Button';
-import Divider from '@mui/material/Divider';
-import TextField from '@mui/material/TextField';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import InputAdornment from '@mui/material/InputAdornment';
 
 import { useRouter } from 'src/routes/hooks';
 

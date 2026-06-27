@@ -1,5 +1,5 @@
-import { useParams } from 'react-router-dom';
-import { useState, useEffect, useCallback, useMemo, } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -36,6 +36,7 @@ export function BatcheStagesView() {
   const table = useTable();
 
   const { batchId } = useParams<{ batchId: string }>();
+  const navigate = useNavigate();
 
   const [openModal, setOpenModal] = useState(false);
   const [batches, setBatches] = useState<BatchStagesInterface[]>([]);
@@ -66,6 +67,12 @@ export function BatcheStagesView() {
 
   const handleOpenModal = () => setOpenModal(true);
 
+  const allStagesCompleted =
+    batches.length > 0 && batches.every((stage) => stage.status === 'completed');
+
+  const handleGoToFinalReport = () =>
+    navigate(`/batches/${batchId}/batch-stages/final-report`);
+
 
 
   useEffect(() => {
@@ -81,14 +88,26 @@ export function BatcheStagesView() {
           { name: 'Etapas' },
         ]}
         action={
-          <Button
-            variant="contained"
-            color="inherit"
-            startIcon={<Iconify icon="mingcute:add-line" />}
-            onClick={handleOpenModal}
-          >
-            Nuevo
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="contained"
+              color="inherit"
+              startIcon={<Iconify icon="mingcute:add-line" />}
+              onClick={handleOpenModal}
+            >
+              Nuevo
+            </Button>
+
+            <Button
+              variant="contained"
+              color="inherit"
+              startIcon={<Iconify icon="mingcute:add-line" />}
+              onClick={handleGoToFinalReport}
+              disabled={!allStagesCompleted}
+            >
+              Reporte final
+            </Button>
+          </Box>
         }
       />
 

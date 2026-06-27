@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import { InputAdornment, OutlinedInput } from '@mui/material';
+import { OutlinedInput, InputAdornment } from '@mui/material';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 

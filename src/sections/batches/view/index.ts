@@ -1,3 +1,3 @@
-export * from './batches-view'
-
 export * from './types'
+
+export * from './batches-view'

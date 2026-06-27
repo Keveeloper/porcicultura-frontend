@@ -21,7 +21,8 @@ export interface CustomAxiosInstance extends AxiosInstance {
 
 // const api: AxiosInstance = axios.create({
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  // Usar hostname dinámico en desarrollo para evitar problemas de CORS/Cookies con la IP local
+  baseURL: import.meta.env.DEV ? `http://${window.location.hostname}:3000` : import.meta.env.VITE_API_BASE_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
