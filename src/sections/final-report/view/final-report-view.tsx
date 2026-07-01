@@ -3,7 +3,7 @@ import type { PaletteColorKey } from 'src/theme/core';
 import dayjs from 'dayjs';
 import { useParams } from 'react-router-dom';
 import { varAlpha } from 'minimal-shared/utils';
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import {
   Box,
@@ -23,9 +23,10 @@ import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Iconify } from 'src/components/iconify';
 import { SvgColor } from 'src/components/svg-color';
+import { Chart, useChart } from 'src/components/chart';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
-import type { FinalReportResponse } from './types';
+import type { WeightPerStageRow, FeedConsumptionRow, FinalReportResponse } from './types';
 
 // ----------------------------------------------------------------------
 
@@ -35,6 +36,9 @@ const STAGE_LABELS: Record<string, string> = {
   growing: 'Levante',
   finishing: 'Engorde',
 };
+
+// Orden cronológico de las etapas dentro de un lote.
+const STAGE_ORDER = ['pre-nursery', 'growing', 'finishing'];
 
 const stageLabel = (stage: string) => STAGE_LABELS[stage] ?? stage;
 
@@ -235,18 +239,24 @@ export function FinalReportView() {
                   <RowLabel label="Conversión" value={report.feed_consumption_total.conv} icon="solar:graph-up-bold-duotone" />
                 </StageCard>
               </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FeedConsumptionChart feedConsumption={report.feed_consumption} />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FeedConversionChart feedConsumption={report.feed_consumption} />
+              </Grid>
             </Grid>
           </Grid>
 
           {/* Peso promedio por etapa */}
           <Grid size={{ xs: 12 }}>
-            <SectionTitle icon="solar:weight-bold-duotone" title="Peso promedio por etapa" />
+            <SectionTitle icon="solar:scale-bold-duotone" title="Peso promedio por etapa" />
             <Grid container spacing={3}>
               {report.weight_per_stage.map((row) => (
                 <Grid size={{ xs: 12, sm: 6, md: 3 }} key={row.stage}>
                   <StageCard title={stageLabel(row.stage)}>
                     <RowLabel label="Peso inicial (kg)" value={row.initial_weight} icon="solar:scale-bold-duotone" />
-                    <RowLabel label="Peso final (kg)" value={row.final_weight} icon="solar:weight-bold-duotone" />
+                    <RowLabel label="Peso final (kg)" value={row.final_weight} icon="solar:scale-bold-duotone" />
                     <RowLabel label="Ganancia (kg)" value={row.gain} icon="solar:star-fall-minimalistic-2-bold-duotone" color="success.main" />
                     <RowLabel label="Gan / Día (kg)" value={row.gain_per_day} icon="solar:graph-up-bold-duotone" />
                   </StageCard>
@@ -255,10 +265,16 @@ export function FinalReportView() {
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <StageCard title="Totales" highlight>
                   <RowLabel label="Peso inicial (kg)" value={report.weight_per_stage_total.initial_weight} icon="solar:scale-bold-duotone" />
-                  <RowLabel label="Peso final (kg)" value={report.weight_per_stage_total.final_weight} icon="solar:weight-bold-duotone" />
+                  <RowLabel label="Peso final (kg)" value={report.weight_per_stage_total.final_weight} icon="solar:scale-bold-duotone" />
                   <RowLabel label="Ganancia (kg)" value={report.weight_per_stage_total.gain} icon="solar:star-fall-minimalistic-2-bold-duotone" color="success.main" />
                   <RowLabel label="Gan / Día (kg)" value={report.weight_per_stage_total.gain_per_day} icon="solar:graph-up-bold-duotone" />
                 </StageCard>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <WeightPerStageChart weightPerStage={report.weight_per_stage} />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <GainPerDayChart weightPerStage={report.weight_per_stage} />
               </Grid>
             </Grid>
           </Grid>
@@ -287,7 +303,7 @@ export function FinalReportView() {
                 <KpiCard
                   title="Promedio peso al sacrificio"
                   value={`${report.average_slaughter_weight} kg`}
-                  icon="solar:weight-bold-duotone"
+                  icon="solar:scale-bold-duotone"
                   color="success"
                 />
               </Grid>
@@ -309,6 +325,212 @@ function SectionTitle({ icon, title }: { icon: string; title: string }) {
         {title}
       </Typography>
     </Box>
+  );
+}
+
+function FeedConsumptionChart({ feedConsumption }: { feedConsumption: FeedConsumptionRow[] }) {
+  const theme = useTheme();
+
+  const sortedRows = useMemo(
+    () =>
+      [...feedConsumption].sort(
+        (a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage)
+      ),
+    [feedConsumption]
+  );
+
+  // Cada métrica tiene una unidad y magnitud distinta (kg totales vs. kg/cerdo vs.
+  // conversión ~1-3), así que se normalizan a % del máximo entre etapas para
+  // poder compararlas en un mismo eje; el valor real se muestra en el tooltip.
+  const metrics = [
+    { key: 'kilos', label: 'Consumo', unit: 'kg' },
+    { key: 'feed_per_pig', label: 'C / Cerdo', unit: 'kg' },
+    { key: 'feed_per_day', label: 'C / Día', unit: 'kg' },
+    { key: 'conv', label: 'Conversión', unit: '' },
+  ] as const;
+
+  const categories = metrics.map((m) => m.label);
+  const rawValues = sortedRows.map((row) => metrics.map((m) => row[m.key]));
+  const metricMax = metrics.map((_, metricIndex) =>
+    Math.max(...rawValues.map((values) => values[metricIndex]), 1)
+  );
+
+  const series = sortedRows.map((row, rowIndex) => ({
+    name: stageLabel(row.stage),
+    data: rawValues[rowIndex].map((value, metricIndex) =>
+      Number(((value / metricMax[metricIndex]) * 100).toFixed(1))
+    ),
+  }));
+
+  const chartColors = [
+    theme.palette.primary.main,
+    theme.palette.warning.main,
+    theme.palette.info.main,
+  ];
+
+  const chartOptions = useChart({
+    colors: chartColors,
+    xaxis: { categories },
+    yaxis: { max: 100, labels: { formatter: (value: number) => `${value}%` } },
+    legend: { show: true },
+    markers: { size: 5, strokeWidth: 2 },
+    tooltip: {
+      y: {
+        formatter: (
+          _value: number,
+          opts: { seriesIndex: number; dataPointIndex: number }
+        ) => {
+          const raw = rawValues[opts.seriesIndex][opts.dataPointIndex];
+          const unit = metrics[opts.dataPointIndex].unit;
+          return unit ? `${raw} ${unit}` : `${raw}`;
+        },
+      },
+    },
+  });
+
+  return (
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardHeader
+        title="Comparativa de consumo por etapa"
+        subheader="Valores normalizados como % del máximo entre etapas por métrica — pase el cursor para ver el valor real"
+      />
+      <Chart
+        type="line"
+        series={series}
+        options={chartOptions}
+        slotProps={{ loading: { p: 2.5 } }}
+        sx={{ pl: 1, py: 2.5, pr: 2.5, flexGrow: 1, minHeight: 364 }}
+      />
+    </Card>
+  );
+}
+
+function FeedConversionChart({ feedConsumption }: { feedConsumption: FeedConsumptionRow[] }) {
+  const theme = useTheme();
+
+  const sortedRows = useMemo(
+    () =>
+      [...feedConsumption].sort(
+        (a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage)
+      ),
+    [feedConsumption]
+  );
+
+  const categories = sortedRows.map((row) => stageLabel(row.stage));
+  const series = [{ name: 'Conversión', data: sortedRows.map((row) => row.conv) }];
+
+  const chartOptions = useChart({
+    colors: [theme.palette.primary.main],
+    xaxis: { categories },
+    legend: { show: false },
+    markers: { size: 6, strokeWidth: 2 },
+    tooltip: { y: { formatter: (value: number) => `${value} kg alimento / kg peso` } },
+  });
+
+  return (
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardHeader
+        title="Comparativa de conversión alimenticia"
+        subheader="Precebo vs. Levante vs. Engorde"
+      />
+      <Chart
+        type="line"
+        series={series}
+        options={chartOptions}
+        slotProps={{ loading: { p: 2.5 } }}
+        sx={{ pl: 1, py: 2.5, pr: 2.5, flexGrow: 1, minHeight: 364 }}
+      />
+    </Card>
+  );
+}
+
+function WeightPerStageChart({ weightPerStage }: { weightPerStage: WeightPerStageRow[] }) {
+  const theme = useTheme();
+
+  const sortedRows = useMemo(
+    () =>
+      [...weightPerStage].sort(
+        (a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage)
+      ),
+    [weightPerStage]
+  );
+
+  // Gan / Día se excluye: es una tasa (~0.3-1.1 kg/día) muy por debajo de los
+  // totales acumulados (hasta ~110 kg), por lo que quedaría invisible en las
+  // mismas barras. Tiene su propia gráfica en GainPerDayChart.
+  const categories = ['Peso inicial (kg)', 'Peso final (kg)', 'Ganancia (kg)'];
+
+  const series = sortedRows.map((row) => ({
+    name: stageLabel(row.stage),
+    data: [row.initial_weight, row.final_weight, row.gain],
+  }));
+
+  const chartColors = [
+    theme.palette.primary.main,
+    theme.palette.warning.main,
+    theme.palette.info.main,
+  ];
+
+  const chartOptions = useChart({
+    colors: chartColors,
+    xaxis: { categories },
+    legend: { show: true },
+    tooltip: { y: { formatter: (value: number) => `${value} kg` } },
+  });
+
+  return (
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardHeader
+        title="Comparativa de peso por etapa"
+        subheader="Precebo vs. Levante vs. Engorde"
+      />
+      <Chart
+        type="bar"
+        series={series}
+        options={chartOptions}
+        slotProps={{ loading: { p: 2.5 } }}
+        sx={{ pl: 1, py: 2.5, pr: 2.5, flexGrow: 1, minHeight: 364 }}
+      />
+    </Card>
+  );
+}
+
+function GainPerDayChart({ weightPerStage }: { weightPerStage: WeightPerStageRow[] }) {
+  const theme = useTheme();
+
+  const sortedRows = useMemo(
+    () =>
+      [...weightPerStage].sort(
+        (a, b) => STAGE_ORDER.indexOf(a.stage) - STAGE_ORDER.indexOf(b.stage)
+      ),
+    [weightPerStage]
+  );
+
+  const categories = sortedRows.map((row) => stageLabel(row.stage));
+  const series = [{ name: 'Gan / Día', data: sortedRows.map((row) => row.gain_per_day) }];
+
+  const chartOptions = useChart({
+    colors: [theme.palette.primary.main],
+    xaxis: { categories },
+    legend: { show: false },
+    markers: { size: 6, strokeWidth: 2 },
+    tooltip: { y: { formatter: (value: number) => `${value} kg/día` } },
+  });
+
+  return (
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardHeader
+        title="Comparativa de ganancia diaria"
+        subheader="Precebo vs. Levante vs. Engorde"
+      />
+      <Chart
+        type="line"
+        series={series}
+        options={chartOptions}
+        slotProps={{ loading: { p: 2.5 } }}
+        sx={{ pl: 1, py: 2.5, pr: 2.5, flexGrow: 1, minHeight: 364 }}
+      />
+    </Card>
   );
 }
 
