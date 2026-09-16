@@ -1,15 +1,18 @@
 import type { PaletteColorKey } from 'src/theme/core';
 
+import jsPDF from 'jspdf';
 import dayjs from 'dayjs';
+import html2canvas from 'html2canvas';
 import { useParams } from 'react-router-dom';
 import { varAlpha } from 'minimal-shared/utils';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 
 import {
   Box,
   Card,
   Grid,
   Stack,
+  Button,
   Divider,
   useTheme,
   Typography,
@@ -52,6 +55,52 @@ export function FinalReportView() {
 
   const [report, setReport] = useState<FinalReportResponse>();
   const [loading, setLoading] = useState(true);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  const handleDownloadPdf = useCallback(async () => {
+    if (!reportRef.current || !report) return;
+
+    try {
+      setDownloadingPdf(true);
+
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+
+      const margin = 24;
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const maxWidth = pageWidth - margin * 2;
+      const maxHeight = pageHeight - margin * 2;
+
+      // Se escala la captura completa para que quepa en una sola hoja, conservando
+      // la proporción original y dejando el margen indicado en los cuatro lados.
+      const canvasRatio = canvas.width / canvas.height;
+      let imgWidth = maxWidth;
+      let imgHeight = imgWidth / canvasRatio;
+      if (imgHeight > maxHeight) {
+        imgHeight = maxHeight;
+        imgWidth = imgHeight * canvasRatio;
+      }
+
+      const x = (pageWidth - imgWidth) / 2;
+      const y = (pageHeight - imgHeight) / 2;
+
+      pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+
+      pdf.save(`reporte-final-lote-${report.batch_number}.pdf`);
+    } catch (e) {
+      console.error('Error al generar el PDF del reporte final:', e);
+    } finally {
+      setDownloadingPdf(false);
+    }
+  }, [report]);
 
   const getFinalReport = useCallback(async () => {
     if (!batchId) return;
@@ -81,6 +130,19 @@ export function FinalReportView() {
           { name: 'Etapas', href: `/batches/${batchId}/batch-stages` },
           { name: 'Reporte final' },
         ]}
+        action={
+          !!report && (
+            <Button
+              variant="contained"
+              color="primary"
+              loading={downloadingPdf}
+              onClick={handleDownloadPdf}
+              startIcon={<Iconify icon="solar:file-download-bold-duotone" />}
+            >
+              Descargar PDF
+            </Button>
+          )
+        }
       />
 
       {loading && (
@@ -100,216 +162,300 @@ export function FinalReportView() {
       )}
 
       {!loading && report && (
-        <Grid container spacing={3}>
-          {/* Banner resumen general */}
-          <Grid size={{ xs: 12 }}>
-            <Card
-              sx={{
-                p: 4,
-                boxShadow: 'none',
-                position: 'relative',
-                overflow: 'hidden',
-                color: 'primary.darker',
-                backgroundColor: 'common.white',
-                backgroundImage: `linear-gradient(135deg, ${varAlpha(theme.vars.palette.primary.lighterChannel, 0.48)}, ${varAlpha(theme.vars.palette.primary.lightChannel, 0.48)})`,
-              }}
-            >
-              <SvgColor
-                src="/assets/background/shape-square.svg"
+        <Box ref={reportRef}>
+          <Grid container spacing={3}>
+            {/* Banner resumen general */}
+            <Grid size={{ xs: 12 }}>
+              <Card
                 sx={{
-                  top: 0,
-                  left: -20,
-                  width: 240,
-                  zIndex: -1,
-                  height: 240,
-                  opacity: 0.24,
-                  position: 'absolute',
-                  color: 'primary.main',
+                  p: 4,
+                  boxShadow: 'none',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  color: 'primary.darker',
+                  backgroundColor: 'common.white',
+                  backgroundImage: `linear-gradient(135deg, ${varAlpha(theme.vars.palette.primary.lighterChannel, 0.48)}, ${varAlpha(theme.vars.palette.primary.lightChannel, 0.48)})`,
                 }}
+              >
+                <SvgColor
+                  src="/assets/background/shape-square.svg"
+                  sx={{
+                    top: 0,
+                    left: -20,
+                    width: 240,
+                    zIndex: -1,
+                    height: 240,
+                    opacity: 0.24,
+                    position: 'absolute',
+                    color: 'primary.main',
+                  }}
+                />
+
+                <Grid container spacing={3} alignItems="center">
+                  <Grid size={{ xs: 12, md: 5 }}>
+                    <Typography
+                      variant="overline"
+                      sx={{ opacity: 0.8, fontWeight: 'bold', letterSpacing: 1.2 }}
+                    >
+                      RESULTADO FINAL LOTE PORCINO
+                    </Typography>
+                    <Typography variant="h3" sx={{ mt: 1, fontWeight: 'bold' }}>
+                      {report.farm_name}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, opacity: 0.9 }}>
+                      <Iconify icon="solar:tag-horizontal-bold-duotone" sx={{ mr: 1 }} />
+                      <Typography variant="subtitle1">Lote #{report.batch_number}</Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 7 }}>
+                    <Stack
+                      direction={{ xs: 'column', sm: 'row' }}
+                      spacing={4}
+                      justifyContent={{ xs: 'flex-start', md: 'flex-end' }}
+                    >
+                      <Box>
+                        <Typography variant="overline" sx={{ opacity: 0.8 }}>
+                          Ingreso
+                        </Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+                          {formatDate(report.entry_date)}
+                        </Typography>
+                      </Box>
+                      <Box
+                        sx={{
+                          display: { xs: 'none', sm: 'block' },
+                          width: '1px',
+                          bgcolor: varAlpha(theme.vars.palette.primary.mainChannel, 0.24),
+                        }}
+                      />
+                      <Box>
+                        <Typography variant="overline" sx={{ opacity: 0.8 }}>
+                          Salida
+                        </Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+                          {formatDate(report.exit_date)}
+                        </Typography>
+                      </Box>
+                      <Box
+                        sx={{
+                          display: { xs: 'none', sm: 'block' },
+                          width: '1px',
+                          bgcolor: varAlpha(theme.vars.palette.primary.mainChannel, 0.24),
+                        }}
+                      />
+                      <Box>
+                        <Typography variant="overline" sx={{ opacity: 0.8 }}>
+                          Días
+                        </Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+                          {report.days}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Grid>
+                </Grid>
+              </Card>
+            </Grid>
+
+            {/* KPIs de población y mortalidad */}
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <KpiCard
+                title="Cerdos iniciales"
+                value={report.initial_pigs}
+                icon="solar:users-group-rounded-bold-duotone"
+                color="info"
               />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <KpiCard
+                title="Cerdos finales"
+                value={report.final_pigs}
+                icon="solar:users-group-two-rounded-bold-duotone"
+                color="success"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <KpiCard
+                title="Mortalidad"
+                value={report.mortality}
+                icon="solar:danger-triangle-bold-duotone"
+                color="error"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <KpiCard
+                title="% Mortalidad lote"
+                value={`${report.mortality_percentage}%`}
+                icon="solar:chart-square-bold-duotone"
+                color="warning"
+              />
+            </Grid>
 
-              <Grid container spacing={3} alignItems="center">
-                <Grid size={{ xs: 12, md: 5 }}>
-                  <Typography
-                    variant="overline"
-                    sx={{ opacity: 0.8, fontWeight: 'bold', letterSpacing: 1.2 }}
+            {/* Consumo de alimento por etapa */}
+            <Grid size={{ xs: 12 }}>
+              <SectionTitle icon="solar:box-bold-duotone" title="Consumo de alimento" />
+              <Grid container spacing={3}>
+                {report.feed_consumption.map((row) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }} key={row.stage}>
+                    <StageCard title={stageLabel(row.stage)} subheader={`${row.days} días`}>
+                      <RowLabel
+                        label="Consumo (kg)"
+                        value={row.kilos}
+                        icon="solar:box-bold-duotone"
+                      />
+                      <RowLabel
+                        label="C / Cerdo"
+                        value={row.feed_per_pig}
+                        icon="solar:user-bold-duotone"
+                      />
+                      <RowLabel
+                        label="C / Día"
+                        value={row.feed_per_day}
+                        icon="solar:calendar-bold-duotone"
+                      />
+                      <RowLabel
+                        label="Conversión"
+                        value={row.conv}
+                        icon="solar:graph-up-bold-duotone"
+                      />
+                    </StageCard>
+                  </Grid>
+                ))}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <StageCard
+                    title="Totales"
+                    subheader={`${report.feed_consumption_total.days} días`}
+                    highlight
                   >
-                    RESULTADO FINAL LOTE PORCINO
-                  </Typography>
-                  <Typography variant="h3" sx={{ mt: 1, fontWeight: 'bold' }}>
-                    {report.farm_name}
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, opacity: 0.9 }}>
-                    <Iconify icon="solar:tag-horizontal-bold-duotone" sx={{ mr: 1 }} />
-                    <Typography variant="subtitle1">Lote #{report.batch_number}</Typography>
-                  </Box>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 7 }}>
-                  <Stack
-                    direction={{ xs: 'column', sm: 'row' }}
-                    spacing={4}
-                    justifyContent={{ xs: 'flex-start', md: 'flex-end' }}
-                  >
-                    <Box>
-                      <Typography variant="overline" sx={{ opacity: 0.8 }}>
-                        Ingreso
-                      </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                        {formatDate(report.entry_date)}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: { xs: 'none', sm: 'block' }, width: '1px', bgcolor: varAlpha(theme.vars.palette.primary.mainChannel, 0.24) }} />
-                    <Box>
-                      <Typography variant="overline" sx={{ opacity: 0.8 }}>
-                        Salida
-                      </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                        {formatDate(report.exit_date)}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: { xs: 'none', sm: 'block' }, width: '1px', bgcolor: varAlpha(theme.vars.palette.primary.mainChannel, 0.24) }} />
-                    <Box>
-                      <Typography variant="overline" sx={{ opacity: 0.8 }}>
-                        Días
-                      </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                        {report.days}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </Grid>
-              </Grid>
-            </Card>
-          </Grid>
-
-          {/* KPIs de población y mortalidad */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <KpiCard
-              title="Cerdos iniciales"
-              value={report.initial_pigs}
-              icon="solar:users-group-rounded-bold-duotone"
-              color="info"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <KpiCard
-              title="Cerdos finales"
-              value={report.final_pigs}
-              icon="solar:users-group-two-rounded-bold-duotone"
-              color="success"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <KpiCard
-              title="Mortalidad"
-              value={report.mortality}
-              icon="solar:danger-triangle-bold-duotone"
-              color="error"
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <KpiCard
-              title="% Mortalidad lote"
-              value={`${report.mortality_percentage}%`}
-              icon="solar:chart-square-bold-duotone"
-              color="warning"
-            />
-          </Grid>
-
-          {/* Consumo de alimento por etapa */}
-          <Grid size={{ xs: 12 }}>
-            <SectionTitle icon="solar:box-bold-duotone" title="Consumo de alimento" />
-            <Grid container spacing={3}>
-              {report.feed_consumption.map((row) => (
-                <Grid size={{ xs: 12, sm: 6, md: 3 }} key={row.stage}>
-                  <StageCard title={stageLabel(row.stage)} subheader={`${row.days} días`}>
-                    <RowLabel label="Consumo (kg)" value={row.kilos} icon="solar:box-bold-duotone" />
-                    <RowLabel label="C / Cerdo" value={row.feed_per_pig} icon="solar:user-bold-duotone" />
-                    <RowLabel label="C / Día" value={row.feed_per_day} icon="solar:calendar-bold-duotone" />
-                    <RowLabel label="Conversión" value={row.conv} icon="solar:graph-up-bold-duotone" />
+                    <RowLabel
+                      label="Consumo (kg)"
+                      value={report.feed_consumption_total.kilos}
+                      icon="solar:box-bold-duotone"
+                    />
+                    <RowLabel
+                      label="C / Cerdo"
+                      value={report.feed_consumption_total.feed_per_pig}
+                      icon="solar:user-bold-duotone"
+                    />
+                    <RowLabel
+                      label="C / Día"
+                      value={report.feed_consumption_total.feed_per_day}
+                      icon="solar:calendar-bold-duotone"
+                    />
+                    <RowLabel
+                      label="Conversión"
+                      value={report.feed_consumption_total.conv}
+                      icon="solar:graph-up-bold-duotone"
+                    />
                   </StageCard>
                 </Grid>
-              ))}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <StageCard title="Totales" subheader={`${report.feed_consumption_total.days} días`} highlight>
-                  <RowLabel label="Consumo (kg)" value={report.feed_consumption_total.kilos} icon="solar:box-bold-duotone" />
-                  <RowLabel label="C / Cerdo" value={report.feed_consumption_total.feed_per_pig} icon="solar:user-bold-duotone" />
-                  <RowLabel label="C / Día" value={report.feed_consumption_total.feed_per_day} icon="solar:calendar-bold-duotone" />
-                  <RowLabel label="Conversión" value={report.feed_consumption_total.conv} icon="solar:graph-up-bold-duotone" />
-                </StageCard>
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FeedConsumptionChart feedConsumption={report.feed_consumption} />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FeedConversionChart feedConsumption={report.feed_consumption} />
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FeedConsumptionChart feedConsumption={report.feed_consumption} />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FeedConversionChart feedConsumption={report.feed_consumption} />
+                </Grid>
               </Grid>
             </Grid>
-          </Grid>
 
-          {/* Peso promedio por etapa */}
-          <Grid size={{ xs: 12 }}>
-            <SectionTitle icon="solar:scale-bold-duotone" title="Peso promedio por etapa" />
-            <Grid container spacing={3}>
-              {report.weight_per_stage.map((row) => (
-                <Grid size={{ xs: 12, sm: 6, md: 3 }} key={row.stage}>
-                  <StageCard title={stageLabel(row.stage)}>
-                    <RowLabel label="Peso inicial (kg)" value={row.initial_weight} icon="solar:scale-bold-duotone" />
-                    <RowLabel label="Peso final (kg)" value={row.final_weight} icon="solar:scale-bold-duotone" />
-                    <RowLabel label="Ganancia (kg)" value={row.gain} icon="solar:star-fall-minimalistic-2-bold-duotone" color="success.main" />
-                    <RowLabel label="Gan / Día (kg)" value={row.gain_per_day} icon="solar:graph-up-bold-duotone" />
+            {/* Peso promedio por etapa */}
+            <Grid size={{ xs: 12 }}>
+              <SectionTitle icon="solar:scale-bold-duotone" title="Peso promedio por etapa" />
+              <Grid container spacing={3}>
+                {report.weight_per_stage.map((row) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }} key={row.stage}>
+                    <StageCard title={stageLabel(row.stage)}>
+                      <RowLabel
+                        label="Peso inicial (kg)"
+                        value={row.initial_weight}
+                        icon="solar:scale-bold-duotone"
+                      />
+                      <RowLabel
+                        label="Peso final (kg)"
+                        value={row.final_weight}
+                        icon="solar:scale-bold-duotone"
+                      />
+                      <RowLabel
+                        label="Ganancia (kg)"
+                        value={row.gain}
+                        icon="solar:star-fall-minimalistic-2-bold-duotone"
+                        color="success.main"
+                      />
+                      <RowLabel
+                        label="Gan / Día (kg)"
+                        value={row.gain_per_day}
+                        icon="solar:graph-up-bold-duotone"
+                      />
+                    </StageCard>
+                  </Grid>
+                ))}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <StageCard title="Totales" highlight>
+                    <RowLabel
+                      label="Peso inicial (kg)"
+                      value={report.weight_per_stage_total.initial_weight}
+                      icon="solar:scale-bold-duotone"
+                    />
+                    <RowLabel
+                      label="Peso final (kg)"
+                      value={report.weight_per_stage_total.final_weight}
+                      icon="solar:scale-bold-duotone"
+                    />
+                    <RowLabel
+                      label="Ganancia (kg)"
+                      value={report.weight_per_stage_total.gain}
+                      icon="solar:star-fall-minimalistic-2-bold-duotone"
+                      color="success.main"
+                    />
+                    <RowLabel
+                      label="Gan / Día (kg)"
+                      value={report.weight_per_stage_total.gain_per_day}
+                      icon="solar:graph-up-bold-duotone"
+                    />
                   </StageCard>
                 </Grid>
-              ))}
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <StageCard title="Totales" highlight>
-                  <RowLabel label="Peso inicial (kg)" value={report.weight_per_stage_total.initial_weight} icon="solar:scale-bold-duotone" />
-                  <RowLabel label="Peso final (kg)" value={report.weight_per_stage_total.final_weight} icon="solar:scale-bold-duotone" />
-                  <RowLabel label="Ganancia (kg)" value={report.weight_per_stage_total.gain} icon="solar:star-fall-minimalistic-2-bold-duotone" color="success.main" />
-                  <RowLabel label="Gan / Día (kg)" value={report.weight_per_stage_total.gain_per_day} icon="solar:graph-up-bold-duotone" />
-                </StageCard>
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <WeightPerStageChart weightPerStage={report.weight_per_stage} />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <GainPerDayChart weightPerStage={report.weight_per_stage} />
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <WeightPerStageChart weightPerStage={report.weight_per_stage} />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <GainPerDayChart weightPerStage={report.weight_per_stage} />
+                </Grid>
               </Grid>
             </Grid>
-          </Grid>
 
-          {/* Pesos finales del lote */}
-          <Grid size={{ xs: 12 }}>
-            <SectionTitle icon="solar:scale-bold-duotone" title="Pesos finales del lote" />
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <KpiCard
-                  title="Peso total en granja"
-                  value={`${report.total_batch_weight_farm} kg`}
-                  icon="solar:home-bold-duotone"
-                  color="info"
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <KpiCard
-                  title="Peso total al sacrificio"
-                  value={`${report.total_batch_weight_slaughter} kg`}
-                  icon="solar:box-minimalistic-bold-duotone"
-                  color="primary"
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <KpiCard
-                  title="Promedio peso al sacrificio"
-                  value={`${report.average_slaughter_weight} kg`}
-                  icon="solar:scale-bold-duotone"
-                  color="success"
-                />
+            {/* Pesos finales del lote */}
+            <Grid size={{ xs: 12 }}>
+              <SectionTitle icon="solar:scale-bold-duotone" title="Pesos finales del lote" />
+              <Grid container spacing={3}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <KpiCard
+                    title="Peso total en granja"
+                    value={`${report.total_batch_weight_farm} kg`}
+                    icon="solar:home-bold-duotone"
+                    color="info"
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <KpiCard
+                    title="Peso total al sacrificio"
+                    value={`${report.total_batch_weight_slaughter} kg`}
+                    icon="solar:box-minimalistic-bold-duotone"
+                    color="primary"
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <KpiCard
+                    title="Promedio peso al sacrificio"
+                    value={`${report.average_slaughter_weight} kg`}
+                    icon="solar:scale-bold-duotone"
+                    color="success"
+                  />
+                </Grid>
               </Grid>
             </Grid>
           </Grid>
-        </Grid>
+        </Box>
       )}
     </DashboardContent>
   );
@@ -376,10 +522,7 @@ function FeedConsumptionChart({ feedConsumption }: { feedConsumption: FeedConsum
     markers: { size: 5, strokeWidth: 2 },
     tooltip: {
       y: {
-        formatter: (
-          _value: number,
-          opts: { seriesIndex: number; dataPointIndex: number }
-        ) => {
+        formatter: (_value: number, opts: { seriesIndex: number; dataPointIndex: number }) => {
           const raw = rawValues[opts.seriesIndex][opts.dataPointIndex];
           const unit = metrics[opts.dataPointIndex].unit;
           return unit ? `${raw} ${unit}` : `${raw}`;
